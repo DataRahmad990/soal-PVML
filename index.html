@@ -1,28 +1,254 @@
-<script src="database.js"></script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Database Soal sekarang diambil dari file "database.js"
+    // Jadi, const questions = [...] sudah dihapus dari sini.
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // Database soal sudah dipindahkan ke database.js
-            // Jadi di sini sudah tidak ada lagi const questions = [...]
+    // Variabel Global
+    let userAnswers = {};
+    let currentQuestionId = null;
+    const questionNavigation = document.getElementById('question-navigation');
+    const questionDisplay = document.getElementById('question-display');
+    const welcomeScreen = document.getElementById('welcome-screen');
+    const categoryFilter = document.getElementById('category-filter');
+    const resultsModal = document.getElementById('results-modal');
+    const showResultsBtn = document.getElementById('show-results-btn');
+    const closeModalBtn = document.getElementById('close-modal-btn');
 
-            // Variabel Global
-            let userAnswers = {};
-            let currentQuestionId = null;
-            const questionNavigation = document.getElementById('question-navigation');
-            const questionDisplay = document.getElementById('question-display');
-            const welcomeScreen = document.getElementById('welcome-screen');
-            const categoryFilter = document.getElementById('category-filter');
-            const resultsModal = document.getElementById('results-modal');
-            const showResultsBtn = document.getElementById('show-results-btn');
-            const closeModalBtn = document.getElementById('close-modal-btn');
 
-            // ... dan semua sisa kode JavaScript kamu (fungsi-fungsi, dll)
-            // Lanjutkan sampai akhir...
+    // Fungsi untuk menginisialisasi Kuis
+    function initializeQuiz() {
+        // Cek dulu apakah variabel 'questions' ada, untuk memastikan database.js termuat
+        if (typeof questions === 'undefined') {
+            console.error("Database soal (questions) tidak ditemukan. Pastikan file database.js sudah termuat dengan benar.");
+            welcomeScreen.innerHTML = `<h2 class="text-2xl font-bold text-red-500 mb-4">Error!</h2><p class="text-red-400">Gagal memuat database soal. Silakan periksa file database.js dan coba lagi.</p>`;
+            return;
+        }
 
-            // Mulai Kuis
-            initializeQuiz();
+        const categories = [...new Set(questions.map(q => q.category))];
+        categories.sort().forEach(category => {
+            const option = document.createElement('option');
+            option.value = category;
+            option.textContent = category;
+            categoryFilter.appendChild(option);
         });
-    </script>
+        
+        renderNavigation();
+        categoryFilter.addEventListener('change', renderNavigation);
+        showResultsBtn.addEventListener('click', showResults);
+        closeModalBtn.addEventListener('click', () => resultsModal.classList.add('hidden'));
+    }
 
-</body>
-</html>
+    // Fungsi untuk merender navigasi soal
+    function renderNavigation() {
+        questionNavigation.innerHTML = '';
+        const selectedCategory = categoryFilter.value;
+        const filteredQuestions = questions.filter(q => selectedCategory === 'all' || q.category === selectedCategory);
+
+        for (let groupStart = 1; groupStart <= 200; groupStart += 25) {
+            const groupEnd = groupStart + 24;
+            const groupHeader = document.createElement('h4');
+            groupHeader.textContent = `Soal ${groupStart} - ${groupEnd}`;
+            groupHeader.className = 'text-sm font-semibold text-gray-500 mt-4 pb-1 border-b';
+             if (groupStart === 1) {
+                groupHeader.classList.remove('mt-4');
+            }
+            
+            const gridContainer = document.createElement('div');
+            gridContainer.className = 'grid grid-cols-5 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-5 gap-2 pt-2';
+
+            let groupHasVisibleQuestions = false;
+            for (let i = groupStart; i <= groupEnd; i++) {
+                const questionData = questions.find(q => q.id === i);
+                const isVisible = selectedCategory === 'all' || (questionData && questionData.category === selectedCategory);
+
+                if (isVisible && questionData) {
+                    groupHasVisibleQuestions = true;
+                    const navItem = document.createElement('div');
+                    navItem.textContent = i;
+                    navItem.className = 'w-10 h-10 flex items-center justify-center font-bold rounded-md shadow-sm question-nav-item cursor-pointer';
+
+                    if (userAnswers[i]) {
+                        navItem.classList.add(userAnswers[i].isCorrect ? 'bg-green-500' : 'bg-red-500', 'text-white', 'border-transparent');
+                    } else {
+                        navItem.classList.add('bg-white', 'border', 'border-gray-300', 'text-gray-700');
+                    }
+                    if (i === currentQuestionId) {
+                        navItem.classList.add('ring-2', 'ring-blue-500', 'ring-offset-2');
+                    }
+                    navItem.addEventListener('click', () => displayQuestion(i));
+                    gridContainer.appendChild(navItem);
+                }
+            }
+
+            if(groupHasVisibleQuestions) {
+                questionNavigation.appendChild(groupHeader);
+                questionNavigation.appendChild(gridContainer);
+            }
+        }
+    }
+
+
+    // Fungsi untuk menampilkan soal
+    function displayQuestion(id) {
+        currentQuestionId = id;
+        const question = questions.find(q => q.id === id);
+        if (!question) return;
+
+        welcomeScreen.classList.add('hidden');
+        questionDisplay.classList.remove('hidden');
+
+        document.getElementById('question-number').textContent = question.id;
+        document.getElementById('question-category').textContent = question.category;
+        document.getElementById('question-text').textContent = question.question;
+
+        const optionsContainer = document.getElementById('options-container');
+        optionsContainer.innerHTML = '';
+        
+        const filteredQuestions = questions.filter(q => categoryFilter.value === 'all' || q.category === categoryFilter.value);
+
+        const shuffledOptions = [...question.options].sort(() => Math.random() - 0.5);
+        shuffledOptions.forEach(option => {
+            const optionWrapper = document.createElement('div');
+            optionWrapper.classList.add('option-item', 'border', 'border-gray-300', 'p-4', 'rounded-lg', 'text-gray-700', 'font-medium');
+            optionWrapper.dataset.option = option;
+            optionWrapper.innerHTML = `<span>${option}</span>`;
+
+            optionWrapper.addEventListener('click', () => handleOptionSelect(question, option));
+            optionsContainer.appendChild(optionWrapper);
+        });
+        
+        document.getElementById('explanation-container').innerHTML = '';
+        
+        const nextBtn = document.getElementById('next-question-btn');
+        nextBtn.classList.add('hidden');
+        nextBtn.onclick = () => {
+            const currentIndex = filteredQuestions.findIndex(q => q.id === currentQuestionId);
+            if(currentIndex !== -1 && currentIndex < filteredQuestions.length - 1){
+                 displayQuestion(filteredQuestions[currentIndex + 1].id);
+            }
+        };
+
+        if (userAnswers[id]) {
+            showAnswer(question, userAnswers[id].selected);
+        }
+        
+        renderNavigation();
+    }
+
+    // Fungsi saat memilih jawaban
+    function handleOptionSelect(question, selectedOption) {
+        if (userAnswers[question.id]) return; 
+
+        const isCorrect = selectedOption === question.answer;
+        userAnswers[question.id] = { selected: selectedOption, isCorrect: isCorrect };
+
+        showAnswer(question, selectedOption);
+        renderNavigation();
+    }
+    
+    // Fungsi untuk menampilkan jawaban dan penjelasan
+    function showAnswer(question, selectedOption) {
+         const isCorrect = userAnswers[question.id].isCorrect;
+         const options = document.querySelectorAll('.option-item');
+         options.forEach(opt => {
+             opt.style.pointerEvents = 'none';
+             const optionText = opt.dataset.option;
+             
+             if (optionText === question.answer) {
+                 opt.classList.remove('border-gray-300');
+                 opt.classList.add('bg-green-50', 'border-green-500', 'text-green-800', 'font-bold');
+                 opt.innerHTML += `<span class="ml-auto text-green-600 font-bold">&#10003;</span>`;
+             } else if (optionText === selectedOption) {
+                 opt.classList.remove('border-gray-300');
+                 opt.classList.add('bg-red-50', 'border-red-500', 'text-red-800');
+                 opt.innerHTML += `<span class="ml-auto text-red-600 font-bold">&#10007;</span>`;
+             }
+             opt.classList.add('flex', 'items-center');
+         });
+
+        const explanationContainer = document.getElementById('explanation-container');
+        explanationContainer.innerHTML = ''; 
+
+        const explanationCard = document.createElement('div');
+        explanationCard.className = 'explanation-card border-l-4 rounded-r-lg';
+        
+        const title = document.createElement('h4');
+        title.className = 'font-bold';
+        title.textContent = 'Pembahasan:';
+
+        const text = document.createElement('p');
+        text.className = 'mt-2';
+        text.textContent = question.explanation;
+
+        if (isCorrect) {
+             explanationCard.classList.add('bg-green-50', 'border-green-500');
+             title.classList.add('text-green-800');
+             text.classList.add('text-green-700');
+        } else {
+             explanationCard.classList.add('bg-red-50', 'border-red-500');
+             title.classList.add('text-red-800');
+             text.classList.add('text-red-700');
+        }
+        
+        explanationCard.appendChild(title);
+        explanationCard.appendChild(text);
+        explanationContainer.appendChild(explanationCard);
+
+        setTimeout(() => explanationCard.classList.add('show'), 10);
+        
+        const filteredQuestions = questions.filter(q => categoryFilter.value === 'all' || q.category === categoryFilter.value);
+        const currentIndex = filteredQuestions.findIndex(q => q.id === currentQuestionId);
+        if(currentIndex < filteredQuestions.length - 1){
+             document.getElementById('next-question-btn').classList.remove('hidden');
+        }
+    }
+    
+    // Fungsi untuk menampilkan hasil
+    function showResults() {
+        const totalAnswered = Object.keys(userAnswers).length;
+        if (totalAnswered === 0) {
+            alert("Anda belum menjawab satu soal pun.");
+            return;
+        }
+
+        const correctCount = Object.values(userAnswers).filter(ans => ans.isCorrect).length;
+        const incorrectCount = totalAnswered - correctCount;
+        const score = (correctCount / questions.length) * 100;
+
+        document.getElementById('final-score').textContent = `${score.toFixed(0)}%`;
+        document.getElementById('correct-answers').textContent = correctCount;
+        document.getElementById('incorrect-answers').textContent = incorrectCount;
+        
+        const categoryResultsContainer = document.getElementById('category-results');
+        categoryResultsContainer.innerHTML = '';
+        const categories = [...new Set(questions.map(q => q.category))];
+        
+        categories.forEach(category => {
+            const answeredInCategory = Object.keys(userAnswers).filter(id => {
+                const q = questions.find(q => q.id == id);
+                return q && q.category === category;
+            });
+            const correctInCategory = answeredInCategory.filter(id => userAnswers[id].isCorrect).length;
+            
+            if (answeredInCategory.length > 0) {
+                const categoryScore = (correctInCategory / answeredInCategory.length) * 100;
+                
+                const resultEl = document.createElement('div');
+                resultEl.innerHTML = `
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-semibold text-gray-700">${category}</span>
+                        <span class="text-sm text-gray-500">${correctInCategory}/${answeredInCategory.length} benar</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div class="h-2.5 rounded-full ${categoryScore > 60 ? 'bg-green-500' : 'bg-red-500'}" style="width: ${categoryScore}%"></div>
+                    </div>
+                `;
+                categoryResultsContainer.appendChild(resultEl);
+            }
+        });
+
+        resultsModal.classList.remove('hidden');
+    }
+
+    // Mulai Kuis
+    initializeQuiz();
+});
