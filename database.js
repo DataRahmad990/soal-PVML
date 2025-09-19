@@ -16,7 +16,18 @@ const questions = [
                 { id: 6, category: "Lembaga Jasa Keuangan", question: "Berikut adalah merupakan Strategi dalam Road Map LPBBTI, kecuali", options: ["Akselerasi Tranformasi Digital", "Penguatan Tata Kelola", "Perlindungan Konsumen", "Pengembangan Ekosistem"], answer: "Akselerasi Tranformasi Digital", explanation: "Meskipun transformasi digital penting, dalam konteks pilar roadmap LPBBTI yang spesifik, pilihan lainnya (tata kelola, perlindungan konsumen, pengembangan ekosistem) adalah pilar-pilar utamanya." },
                 { id: 7, category: "Lembaga Jasa Keuangan", question: "Periode Road Map LPBBTI", options: ["2023-2027", "2022-2026", "2023-2028", "2025-2029"], answer: "2023-2028", explanation: "Sama seperti Perusahaan Pembiayaan, Roadmap untuk LPBBTI (Layanan Pendanaan Bersama Berbasis Teknologi Informasi) juga ditetapkan untuk periode 2023-2028." },
                 { id: 8, category: "Lembaga Jasa Keuangan", question: "Pilar Road Map Penguatan dan Pengembangan LPBBTI terdiri dari 4 Pilar sebagai Berikut", options: ["Inovasi, Kemitraan, Edukasi, Regulasi", "Digitalisasi, Manajemen Risiko, SDM, Pemasaran", "Perlindungan Konsumen, Tata Kelola Dan Kelembagaan, Pengembangan Elemen Ekosistem dan Pengaturan, Pengawasan dan Perizinan.", "Investasi, Pendanaan, Penagihan, Pelaporan"], answer: "Perlindungan Konsumen, Tata Kelola Dan Kelembagaan, Pengembangan Elemen Ekosistem dan Pengaturan, Pengawasan dan Perizinan.", explanation: "Empat pilar ini merupakan kerangka kerja komprehensif OJK untuk memperkuat industri LPBBTI (Fintech P2P Lending)." },
-                { id: 9, category: "Modal Ventura", question: "Yang bukan merupakan tantangan dalam penyusunan Road Map Perusahaan Modal Ventura", options: ["Dukungan VDC", "Literasi Keuangan", "Ketersediaan Exit Strategy", "Perkembangan Teknologi"], answer: "Dukungan VDC", explanation: "Dukungan VDC (Venture Debt Corporation) justru merupakan salah satu elemen pendukung, bukan tantangan, dalam ekosistem modal ventura." },
+                {
+  id: 9,
+  category: "Modal Ventura",
+  question: "Yang bukan merupakan tantangan dalam penyusunan Road Map Perusahaan Modal Ventura",
+  options: [
+    "Penurunan Jumlah PMV",
+    "Ekosistem",
+    "Buy Now Pay Later"
+  ],
+  answer: "Buy Now Pay Later",
+  explanation: "Penurunan Jumlah PMV dan pengembangan Ekosistem adalah tantangan inti bagi industri modal ventura. Buy Now Pay Later (BNPL) adalah produk di sektor lain (perusahaan pembiayaan/fintech) dan bukan merupakan tantangan struktural dalam penyusunan roadmap untuk industri Modal Ventura itu sendiri."
+},
                 {
   id: 10,
   category: "Peraturan & Hukum",
@@ -228,3 +239,4 @@ const questions = [
                 { id: 200, category: "Roadmap & Tata Kelola", "question": "Pilar 'Pengembangan Elemen Ekosistem' dalam sebuah roadmap bertujuan untuk...", "options": ["Menghukum LJK yang melanggar", "Memperkuat infrastruktur pendukung, asosiasi, dan kolaborasi industri", "Memperketat peraturan yang ada", "Mengurangi jumlah pemain di industri"], "answer": "Memperkuat infrastruktur pendukung, asosiasi, dan kolaborasi industri", "explanation": "Pilar ini fokus pada pengembangan komponen-komponen di luar LJK itu sendiri yang dapat mendukung pertumbuhan industri secara keseluruhan, seperti pusat data, asosiasi yang kuat, dan sinergi antar lembaga." }
 
             ];
+
