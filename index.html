@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuis Interaktif - Sektor Jasa Keuangan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .question-nav-item {
+            transition: all 0.2s ease-in-out;
+        }
+        .question-nav-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .option-item {
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .option-item:hover {
+            background-color: #f0f4ff;
+        }
+        .explanation-card {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out, padding 0.5s ease-out;
+        }
+        .explanation-card.show {
+            max-height: 500px; /* Adjust as needed */
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-800">Kuis Interaktif</h1>
+            <p class="text-slate-600 mt-2">Uji Pengetahuan Anda di Sektor Jasa Keuangan</p>
+        </header>
+
+        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-lg h-fit sticky top-8">
+                <h2 class="text-xl font-bold mb-4">Navigasi Soal</h2>
+                
+                <div class="mb-4">
+                    <label for="category-filter" class="block text-sm font-medium text-gray-700 mb-2">Filter Kategori:</label>
+                    <select id="category-filter" class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5">
+                        <option value="all">Semua Kategori</option>
+                    </select>
+                </div>
+
+                <div id="question-navigation" class="max-h-[500px] overflow-y-auto pr-2">
+                    </div>
+
+                <button id="show-results-btn" class="w-full mt-6 bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition duration-300">
+                    Lihat Hasil Akhir
+                </button>
+            </div>
+
+            <div id="quiz-container" class="lg:col-span-2 bg-white p-6 md:p-8 rounded-xl shadow-lg">
+                <div id="welcome-screen" class="text-center">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-4">Selamat Datang!</h2>
+                    <p class="text-slate-600 mb-6">Silakan pilih nomor soal dari panel navigasi di sebelah kiri untuk memulai kuis. Anda dapat mengerjakan soal secara acak.</p>
+                    <p class="text-sm text-slate-500">Hasil jawaban (benar/salah) akan langsung terlihat setelah Anda menjawab.</p>
+                </div>
+
+                <div id="question-display" class="hidden">
+                    <div class="flex justify-between items-start mb-4">
+                         <p id="question-category" class="bg-blue-100 text-blue-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded"></p>
+                         <p class="text-lg font-semibold text-slate-700">Soal #<span id="question-number"></span></p>
+                    </div>
+                    <p id="question-text" class="text-lg text-gray-800 leading-relaxed mb-6"></p>
+                    
+                    <div id="options-container" class="space-y-3">
+                        </div>
+
+                    <div id="explanation-container">
+                        <div id="explanation-card" class="explanation-card mt-6 bg-green-50 border-l-4 border-green-500 p-4 rounded-r-lg">
+                            <h4 class="font-bold text-green-800">Pembahasan:</h4>
+                            <p id="explanation-text" class="text-green-700 mt-2"></p>
+                        </div>
+                    </div>
+
+                     <div class="mt-8 flex justify-end">
+                        <button id="next-question-btn" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition duration-300 hidden">
+                            Soal Berikutnya &rarr;
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="results-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex justify-center items-center">
+        <div class="bg-white rounded-lg shadow-xl p-8 m-4 max-w-2xl w-full">
+            <h2 class="text-2xl font-bold mb-4 text-center">Hasil Kuis Anda</h2>
+            <div class="flex justify-around text-center mb-6">
+                <div>
+                    <p class="text-lg font-semibold">Skor Akhir</p>
+                    <p id="final-score" class="text-4xl font-bold text-blue-600">0%</p>
+                </div>
+                <div>
+                    <p class="text-lg font-semibold">Jawaban Benar</p>
+                    <p id="correct-answers" class="text-4xl font-bold text-green-600">0</p>
+                </div>
+                 <div>
+                    <p class="text-lg font-semibold">Jawaban Salah</p>
+                    <p id="incorrect-answers" class="text-4xl font-bold text-red-600">0</p>
+                </div>
+            </div>
+            <h3 class="text-xl font-bold mb-3 text-center">Analisis Berdasarkan Kategori</h3>
+            <div id="category-results" class="space-y-3">
+                </div>
+            <div class="mt-6 text-center">
+                 <button id="close-modal-btn" class="bg-gray-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-gray-600 transition duration-300">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Database Soal
+            const questions = [
+                // SOAL 1-38 DARI SEBELUMNYA
+                { id: 1, category: "Roadmap & Tata Kelola", question: "Yang Merupakan Pilar pertama dalam Road Map Perusahaan Modal Ventura", options: ["Perlindungan Konsumen", "Pengembangan Ekosistem", "Pengawasan dan Perizinan", "Tata Kelola Dan Kelembagaan"], answer: "Tata Kelola Dan Kelembagaan", explanation: "Pilar pertama dalam Roadmap PMV adalah Tata Kelola dan Kelembagaan, yang menjadi fondasi utama untuk membangun industri yang kuat dan terpercaya." },
+                { id: 2, category: "Peraturan & Hukum", question: "Undang-Undang pembentukan Lembaga Pembiayaan Ekspor Indonesia, adalah", options: ["UU Nomor 4 tahun 2023", "UU Nomor 2 tahun 2009", "UU Nomor 1 tahun 2013", "UU Nomor 21 tahun 2011"], answer: "UU Nomor 2 tahun 2009", explanation: "UU No. 2 Tahun 2009 adalah landasan hukum spesifik untuk pembentukan Lembaga Pembiayaan Ekspor Indonesia (LPEI) atau Indonesia Eximbank." },
+                { id: 3, category: "Modal Ventura", question: "Apa Singkatan VDC pada Perusahaan Modal Ventura", options: ["Venture Capital Corporation", "Venture Direct Company", "Venture Debt Corporation", "Venture Development Company"], answer: "Venture Debt Corporation", explanation: "VDC adalah singkatan dari Venture Debt Corporation, yaitu Perusahaan Modal Ventura yang fokus pada pembiayaan dalam bentuk utang (debt financing)." },
+                { id: 4, category: "Roadmap & Tata Kelola", question: "Periode Road Map Perusahaan Pembiayaan", options: ["2023-2027", "2024-2028", "2025-2029", "2022-2026"], answer: "2024-2028", explanation: "OJK telah menetapkan Roadmap Pengembangan dan Penguatan Perusahaan Pembiayaan untuk periode lima tahun, yaitu 2024 hingga 2028." },
+                {
+  id: 5,
+  category: "Peraturan & Hukum",
+  question: "Jangka waktu permintaan tanggapan dan rapat dengan pendapat untuk Surat Edaran Otoritas Jasa Keuangan, adalah",
+  options: ["5 HK", "7 HK", "10 HK", "14 HK"],
+  answer: "10 HK",
+  explanation: "Untuk SEOJK, jangka waktu permintaan tanggapan dan RDPU ditetapkan 10 Hari Kerja (HK)."
+},                { id: 6, category: "Lembaga Jasa Keuangan", question: "Berikut adalah merupakan Strategi dalam Road Map LPBBTI, kecuali", options: ["Akselerasi Tranformasi Digital", "Penguatan Tata Kelola", "Perlindungan Konsumen", "Pengembangan Ekosistem"], answer: "Akselerasi Tranformasi Digital", explanation: "Meskipun transformasi digital penting, dalam konteks pilar roadmap LPBBTI yang spesifik, pilihan lainnya (tata kelola, perlindungan konsumen, pengembangan ekosistem) adalah pilar-pilar utamanya." },
+                { id: 7, category: "Lembaga Jasa Keuangan", question: "Periode Road Map LPBBTI", options: ["2023-2027", "2022-2026", "2024-2028", "2025-2029"], answer: "2024-2028", explanation: "Sama seperti Perusahaan Pembiayaan, Roadmap untuk LPBBTI (Layanan Pendanaan Bersama Berbasis Teknologi Informasi) juga ditetapkan untuk periode 2024-2028." },
+                { id: 8, category: "Lembaga Jasa Keuangan", question: "Pilar Road Map Penguatan dan Pengembangan LPBBTI terdiri dari 4 Pilar sebagai Berikut", options: ["Inovasi, Kemitraan, Edukasi, Regulasi", "Digitalisasi, Manajemen Risiko, SDM, Pemasaran", "Perlindungan Konsumen, Tata Kelola Dan Kelembagaan, Pengembangan Elemen Ekosistem dan Pengaturan, Pengawasan dan Perizinan.", "Investasi, Pendanaan, Penagihan, Pelaporan"], answer: "Perlindungan Konsumen, Tata Kelola Dan Kelembagaan, Pengembangan Elemen Ekosistem dan Pengaturan, Pengawasan dan Perizinan.", explanation: "Empat pilar ini merupakan kerangka kerja komprehensif OJK untuk memperkuat industri LPBBTI (Fintech P2P Lending)." },
+                { id: 9, category: "Modal Ventura", question: "Yang bukan merupakan tantangan dalam penyusunan Road Map Perusahaan Modal Ventura", options: ["Dukungan VDC", "Literasi Keuangan", "Ketersediaan Exit Strategy", "Perkembangan Teknologi"], answer: "Dukungan VDC", explanation: "Dukungan VDC (Venture Debt Corporation) justru merupakan salah satu elemen pendukung, bukan tantangan, dalam ekosistem modal ventura." },
+                {
+  id: 10,
+  category: "Peraturan & Hukum",
+  question: "Dalam penyusunan RPDK berapa lama waktu yang diberikan untuk melakukan penyesuaian RPDK dengan hasil board seminar",
+  options: ["5 HK", "10 HK", "15 HK", "20 HK"],
+  answer: "10 HK",
+  explanation: "Setelah Board Seminar, tim penyusun Rencana Pengaturan Dewan Komisioner (RPDK) diberi waktu 10 Hari Kerja (HK) untuk melakukan penyesuaian."
+}
+
+                { id: 11, category: "Lembaga Jasa Keuangan", question: "Bentuk badan hukum BP. Tapera adalah", options: ["Perseroan Terbatas", "Tapera", "Yayasan", "Koperasi"], answer: "Tapera", explanation: "BP Tapera (Badan Pengelola Tabungan Perumahan Rakyat) memiliki bentuk badan hukum khusus yang disebut 'Tapera', bukan PT, yayasan, atau koperasi." },
+                { id: 12, category: "Lembaga Jasa Keuangan", question: "Target pangsa pembiayaan sektor produktif dan UMKM dalam Roadmap LPBBTI pada akhir tahun 2028", options: ["Secara agregat 50-70%", "Secara agregat 30-40%", "Secara agregat 80-90%", "Secara agregat 20-30%"], answer: "Secara agregat 50-70%", explanation: "Roadmap LPBBTI menargetkan peningkatan signifikan dalam pembiayaan ke sektor produktif dan UMKM, dengan target pangsa pasar agregat antara 50% hingga 70% pada akhir 2028." },
+                {
+  id: 13,
+  category: "Peraturan & Hukum",
+  question: "Waktu penyelarasan dalam penyusunan SEOJK kondisi mendesak adalah",
+  options: ["3 HK", "5 HK", "10 HK", "15 HK"],
+  answer: "10 HK",
+  explanation: "Untuk kondisi mendesak, penyelarasan SEOJK ditetapkan 10 Hari Kerja (HK)."
+},
+
+                { id: 14, category: "Peraturan & Hukum", question: "Waktu penyelarasan dalam penyusunan RPOJK kondisi mendesak adalah", options: ["5 HK", "7 HK", "10 HK", "15 HK"], answer: "10 HK", explanation: "Meskipun dalam kondisi mendesak, penyusunan Rancangan POJK (RPOJK) memerlukan waktu penyelarasan yang lebih lama dari SEOJK, yaitu 10 Hari Kerja (HK)." },
+                { id: 15, category: "Lembaga Jasa Keuangan", question: "Berikut adalah merupakan rencana kerja Strategi Penguatan Perlindungan Konsumen Dalam Road Map LPBBTI, kecuali", options: ["Optimalisasi portal perlindungan konsumen", "Mekanisme penyelesaian sengketa", "Pengembangan Credit Scoring", "Edukasi dan literasi keuangan"], answer: "Pengembangan Credit Scoring", explanation: "Pengembangan Credit Scoring lebih termasuk dalam strategi pengembangan ekosistem dan manajemen risiko, bukan secara langsung di bawah pilar penguatan perlindungan konsumen." },
+                { id: 16, category: "Peraturan & Hukum", question: "Yang termasuk Jenis Peraturan yang dikeluarkan oleh OJK adalah, kecuali", options: ["Surat Keputusan OJK (KEP. OJK)", "Peraturan OJK (POJK)", "Surat Edaran OJK (SEOJK)", "Peraturan Dewan Komisioner (PDK)"], answer: "Surat Keputusan OJK (KEP. OJK)", explanation: "POJK, SEOJK, dan PDK adalah jenis peraturan perundang-undangan yang dikeluarkan OJK. Surat Keputusan (KEP) lebih bersifat penetapan administratif individual, bukan peraturan umum." },
+                { id: 17, category: "Peraturan & Hukum", question: "Dalam penyusunan RPOJK tahapan yang dilakukan sebelum dimintakan penyelarasan ke DHUK, kecuali", options: ["Penyusunan Naskah Akademik", "Public Hearing", "RDK", "Harmonisasi internal"], answer: "RDK", explanation: "Rapat Dewan Komisioner (RDK) untuk persetujuan biasanya dilakukan setelah proses penyelarasan dengan Departemen Hukum (DHUK), bukan sebelumnya." },
+                { id: 18, category: "Roadmap & Tata Kelola", question: "Berikut adalah merupakan rencana kerja Strategi Pengembangan Elemen Ekosistem Dalam Road Map Perusahaan Pembiayaan, kecuali", options: ["Pengembangan produk inovatif", "Kolaborasi dengan fintech", "Penertiban Iklan Menyesatkan", "Peningkatan literasi digital"], answer: "Penertiban Iklan Menyesatkan", explanation: "Penertiban iklan yang menyesatkan lebih masuk ke dalam pilar Perlindungan Konsumen, bukan Pengembangan Elemen Ekosistem." },
+                { id: 19, category: "Lembaga Jasa Keuangan", question: "Bentuk Badan Hukum Layanan Pendanaan Bersama Berbasis Teknologi Informasi adalah", options: ["Koperasi", "Yayasan", "Perseroan Terbatas", "Firma"], answer: "Perseroan Terbatas", explanation: "Sesuai POJK 10/2022, penyelenggara LPBBTI (Fintech P2P Lending) wajib berbentuk badan hukum Perseroan Terbatas (PT)." },
+                { id: 20, category: "Lembaga Jasa Keuangan", question: "Peraturan dan Dasar Hukum Lembaga Keuangan Mikro, kecuali", options: ["UU No. 1 Tahun 2013", "POJK No. 62/POJK.05/2020", "SEOJK No. 29/SEOJK.05/2021", "POJK No. 77 tahun 2016"], answer: "POJK No. 77 tahun 2016", explanation: "POJK No. 77 Tahun 2016 (sekarang POJK 10/2022) mengatur tentang LPBBTI (Fintech P2P Lending), bukan Lembaga Keuangan Mikro (LKM)." },
+                { id: 21, category: "Peraturan & Hukum", question: "Tahapan yang dilakukan setelah dilakukan penyelarasan oleh DHUK dalam penyusunan RPOJK adalah", options: ["RDK", "Uji Publik", "Sosialisasi", "Pembentukan tim internal"], answer: "RDK", explanation: "Setelah RPOJK selaras dari sisi hukum oleh Departemen Hukum (DHUK), tahapan selanjutnya adalah meminta persetujuan dari Rapat Dewan Komisioner (RDK)." },
+                { id: 22, category: "Peraturan & Hukum", question: "Dasar hukum pembentukan peraturan di Otoritas Jasa Keuangan diatur dalam", options: ["PDK Nomor 1/PDK.01/2020", "PDK Nomor 1/PDK.02/2022", "PDK Nomor 3/PDK.03/2021", "PDK Nomor 2/PDK.01/2023"], answer: "PDK Nomor 1/PDK.02/2022", explanation: "Prosedur dan tata cara pembentukan peraturan di OJK diatur secara internal melalui Peraturan Dewan Komisioner (PDK) Nomor 1/PDK.02/2022." },
+                { id: 23, category: "Modal Ventura", question: "Apa Singkatan VCC pada Perusahaan Modal Ventura", options: ["Venture Credit Company", "Venture Corporate Capital", "Venture Commercial Corporation", "Venture Capital Corporation"], answer: "Venture Capital Corporation", explanation: "VCC adalah singkatan dari Venture Capital Corporation, yaitu Perusahaan Modal Ventura yang fokus pada pembiayaan dalam bentuk penyertaan modal (equity financing)." },
+                { id: 24, category: "Peraturan & Hukum", question: "Dalam proses pengundangan Peraturan Otoritas Jasa Keuangan (POJK) dicatatkan dalam", options: ["Lembar Negara", "Berita Negara", "Tambahan Lembar Negara", "Buku Register OJK"], answer: "Lembar Negara", explanation: "Agar memiliki kekuatan hukum mengikat, POJK harus diundangkan dengan penempatannya dalam Lembaran Negara Republik Indonesia." },
+                { id: 25, category: "Pengawasan & Kepatutan", question: "Berikut yang bukan merupakan Perusahaan di bawah lingkup pemeriksaan khusus PVML", options: ["Perusahaan Asuransi", "Perusahaan Pembiayaan", "Dana Pensiun", "Lembaga Keuangan Mikro"], answer: "Perusahaan Asuransi", explanation: "PVML (Pengawasan Ventura, Mikro, dan Lainnya) memiliki lingkup pengawasan spesifik. Perusahaan Asuransi diawasi oleh departemen pengawasan IKNB (Industri Keuangan Non-Bank) yang berbeda." },
+                { id: 26, category: "Lembaga Jasa Keuangan", question: "Batas kepemilikan asing untuk Penyelenggara Layanan Pendanaan Bersama Berbasis Teknologi Informasi yaitu sebesar", options: ["49%", "75%", "85%", "100%"], answer: "85%", explanation: "POJK 10/2022 mengatur bahwa kepemilikan asing, baik secara langsung maupun tidak langsung, pada penyelenggara LPBBTI dibatasi maksimal 85% dari modal disetor." },
+                { id: 27, category: "Lembaga Jasa Keuangan", question: "POJK yang mengatur mengenai Usaha Pergadaian yaitu", options: ["POJK 31 Tahun 2016", "POJK 35 Tahun 2018", "POJK 10 Tahun 2022", "POJK 25 Tahun 2023"], answer: "POJK 31 Tahun 2016", explanation: "POJK 31/POJK.05/2016 adalah peraturan utama yang mengatur tentang Usaha Pergadaian di Indonesia, mencakup perizinan, kegiatan usaha, dan tata kelola." },
+                { id: 28, category: "Pengawasan & Kepatutan", question: "Yang termasuk dalam dokumen utama yang diperlukan dalam forum panel adalah", options: ["Profil risiko dan Laporan Tata Kelola", "Laporan TKS, Tren data keuangan minimal 3 tahun, daftar sanksi", "Rencana Bisnis dan Laporan Keuangan Bulanan", "Semua benar"], answer: "Laporan TKS, Tren data keuangan minimal 3 tahun, daftar sanksi", explanation: "Forum panel pengawasan memerlukan data komprehensif untuk evaluasi, termasuk Laporan Tingkat Keseharan (TKS), tren keuangan historis, dan riwayat sanksi." },
+                { id: 29, category: "Lembaga Jasa Keuangan", question: "Otoritas Jasa Keuangan memberikan persetujuan atau penolakan atas permohonan izin usaha LKM dalam jangka waktu paling lama yaitu", options: ["10 (sepuluh) hari kerja", "15 (lima belas) hari kerja", "30 (tiga puluh) hari kerja", "20 (dua puluh) hari kerja sejak permohonan izin usaha diterima secara lengkap"], answer: "20 (dua puluh) hari kerja sejak permohonan izin usaha diterima secara lengkap", explanation: "UU LKM menetapkan Service Level Agreement (SLA) bagi OJK untuk memproses izin usaha LKM adalah 20 hari kerja setelah semua dokumen persyaratan diterima lengkap." },
+                { id: 30, category: "Pengawasan & Kepatutan", question: "Asas yang digunakan dalam Pemeriksaan Khusus PVML", options: ["Asas Keterbukaan dan Akuntabilitas", "Asas Profesionalisme dan Integritas", "Asas Praduga Tak Bersalah, Asas Legalitas, Asas Kepatuhan Hukum", "Asas Kerahasiaan dan Kehati-hatian"], answer: "Asas Praduga Tak Bersalah, Asas Legalitas, Asas Kepatuhan Hukum", explanation: "Pemeriksaan khusus harus berlandaskan pada asas hukum fundamental, termasuk praduga tak bersalah (seseorang dianggap tidak bersalah sampai terbukti), legalitas (tindakan harus sesuai hukum), dan kepatuhan hukum." },
+                { id: 31, category: "Pengawasan & Kepatutan", question: "Salah satu faktor kompetensi bagi anggota Direksi... adalah pengetahuan dan kemampuan pengelolaan strategis, faktor dimaksud dapat dibuktikan dengan", options: ["Sertifikasi manajemen risiko", "Semua Benar", "Pengalaman kerja relevan minimal 5 tahun", "Ijazah pendidikan formal"], answer: "Semua Benar", explanation: "Kompetensi pengelolaan strategis dapat dibuktikan melalui kombinasi berbagai faktor, termasuk pendidikan formal, sertifikasi profesional yang relevan, dan pengalaman kerja di bidang strategis." },
+                { id: 32, category: "Pengawasan & Kepatutan", question: "Menyusun rancangan rekomendasi di dalam Risalah Forum Panel merupakan tugas dari", options: ["Kepala Departemen Pengawasan", "Fungsi Pengendalian Kualitas Pengawasan", "Tim Pemeriksa Langsung", "Direksi LJK yang bersangkutan"], answer: "Fungsi Pengendalian Kualitas Pengawasan", explanation: "Fungsi Pengendalian Kualitas Pengawasan (FKP) bertindak sebagai 'second line of defense' yang salah satu tugasnya adalah merumuskan rekomendasi pengawasan secara objektif dalam Risalah Forum Panel." },
+                { id: 33, category: "Pengawasan & Kepatutan", question: "Faktor-Faktor Penilaian dalam Pelaksanaan Penilaian Kemampuan dan Kepatutan untuk calon pemegang saham pengendali yang paling relevan adalah", options: ["Kompetensi, reputasi keuangan dan integritas", "Kewarganegaraan dan domisili", "Visi dan misi pribadi", "Jaringan bisnis dan afiliasi politik"], answer: "Kompetensi, reputasi keuangan dan integritas", explanation: "Tiga pilar utama dalam Fit and Proper Test bagi PSP adalah integritas (akhlak dan moral), kompetensi (kemampuan), dan reputasi keuangan (tidak memiliki catatan keuangan buruk)." },
+                { id: 34, category: "Pengawasan & Kepatutan", question: "Berikut adalah Kriteria penilaian faktor kompetensi bagi Direksi, anggota Dewan Komisaris... kecuali", options: ["Memiliki pengetahuan di bidang LJK", "Memiliki pengalaman relevan", "tidak pernah dinyatakan pailit dan/atau tidak pernah menjadi pemegang saham...", "Memiliki keahlian sesuai posisi"], answer: "tidak pernah dinyatakan pailit dan/atau tidak pernah menjadi pemegang saham...", explanation: "Kriteria 'tidak pernah pailit' lebih merupakan bagian dari penilaian faktor Integritas dan Reputasi Keuangan, bukan faktor Kompetensi." },
+                { id: 35, category: "Pengawasan & Kepatutan", question: "Fungsi Pengendalian Kualitas Pengawasan secara OJK wide berada pada", options: ["First line defense", "Second line defense", "Third line defense", "Fourth line defense"], answer: "Second line defense", explanation: "Dalam model Three Lines of Defense, Fungsi Pengendalian Kualitas Pengawasan (Quality Assurance) berada di Lini Kedua, yang tugasnya memantau dan memastikan efektivitas Lini Pertama (Pengawas operasional)." },
+                { id: 36, category: "Pengawasan & Kepatutan", question: "Berikut adalah pihak-pihak yang diwajibkan mengikuti Penilaian Kemampuan dan Kepatutan Bagi Pihak Utama... kecuali", options: ["Anggota Direksi, Tenaga Ahli, Anggota Dewan Pengawas Syariah", "Pemegang Saham Pengendali", "Anggota Dewan Komisaris", "Pejabat Eksekutif"], answer: "Anggota Direksi, Tenaga Ahli, Anggota Dewan Pengawas Syariah", explanation: "Tenaga Ahli tidak selalu dikategorikan sebagai Pihak Utama yang wajib mengikuti Fit and Proper Test, kecuali jika mereka memiliki pengaruh signifikan setara direksi." },
+                { id: 37, category: "Lembaga Jasa Keuangan", question: "Sebutkan ketentuan permodalan modal disetor bagi Perusahaan Pergadaian di Indonesia", options: ["Rp2,5 miliar untuk lingkup provinsi", "Rp5 miliar untuk lingkup nasional", "Rp500 juta untuk lingkup wilayah kabupaten/kota", "Semua jawaban benar"], answer: "Rp500 juta untuk lingkup wilayah kabupaten/kota", explanation: "POJK 31/2016 menetapkan modal disetor minimum secara berjenjang: Rp 500 juta untuk lingkup kabupaten/kota dan Rp 2,5 miliar untuk lingkup provinsi." },
+                { id: 38, category: "Lembaga Jasa Keuangan", question: "Surat Edaran OJK yang mengatur mengenai Layanan Pendanaan Berbasis Teknologi Informasi yaitu", options: ["SEOJK Nomor 18/SEOJK.05/2022", "SEOJK Nomor 1/SEOJK.05/2024", "SEOJK Nomor 5/SEOJK.05/2020", "SEOJK Nomor 19/SEOJK.05/2023"], answer: "SEOJK Nomor 19/SEOJK.05/2023", explanation: "SEOJK 19/2023 merupakan aturan pelaksana dari POJK 10/2022 yang memberikan panduan lebih detail mengenai penyelenggaraan LPBBTI, termasuk soal batas maksimum manfaat ekonomi." },
+                
+                // SOAL TAMBAHAN (39-200)
+                { id: 39, category: "Pengawasan & Kepatutan", question: "Yang bukan merupakan Kriteria penilaian persyaratan integritas bagi Pihak Utama adalah", options: ["Memiliki akhlak dan moral yang baik", "Tidak termasuk dalam daftar kredit macet", "Cakap melakukan perbuatan hukum", "Memiliki komitmen yang tinggi terhadap peraturan"], answer: "Cakap melakukan perbuatan hukum", explanation: "Cakap melakukan perbuatan hukum adalah syarat umum legalitas subjek hukum, sedangkan kriteria integritas lebih fokus pada akhlak, moral, dan rekam jejak kepatuhan." },
+                { id: 40, category: "Pengawasan & Kepatutan", question: "Yang dimaksud pihak utama pada Perusahaan Ventura dan Lembaga Keuangan Mikro (PVL) adalah", options: ["Seluruh karyawan tetap PVL", "pihak yang memiliki, mengelola, mengawasi, dan/atau mempunyai pengaruh yang signifikan pada PVL", "Nasabah dengan pembiayaan terbesar", "Auditor eksternal yang ditunjuk"], answer: "pihak yang memiliki, mengelola, mengawasi, dan/atau mempunyai pengaruh yang signifikan pada PVL", explanation: "Pihak Utama merujuk pada individu atau entitas yang memegang kendali atau memiliki pengaruh signifikan, seperti direksi, dewan komisaris, dan pemegang saham pengendali." },
+                { id: 41, category: "Prinsip & Operasional", question: "Apakah yang dimaksud dengan fraud yang paling tepat?", options: ["Kesalahan pencatatan akuntansi yang tidak disengaja", "Kegagalan bisnis akibat kondisi pasar", "Pelanggaran prosedur standar tanpa niat jahat", "Tindakan atau praktik curang yang dilakukan seseorang atau entitas dengan maksud untuk memperoleh keuntungan secara tidak sah atau merugikan pihak lain"], answer: "Tindakan atau praktik curang yang dilakukan seseorang atau entitas dengan maksud untuk memperoleh keuntungan secara tidak sah atau merugikan pihak lain", explanation: "Unsur kunci dari fraud adalah adanya niat (mens rea) untuk melakukan kecurangan guna mendapatkan keuntungan yang tidak sah." },
+                { id: 42, category: "Lembaga Jasa Keuangan", question: "Jenis perizinan Penyelenggara Layanan Pendanaan Bersama Berbasis Teknologi Informasi adalah sebagai berikut, kecuali", options: ["Perubahan alamat kantor pusat", "Izin usaha", "Persetujuan menjadi pemegang saham pengendali", "Persetujuan peluncuran produk baru"], answer: "Perubahan alamat kantor pusat", explanation: "Perubahan alamat kantor pusat umumnya merupakan pelaporan, bukan perizinan yang memerlukan persetujuan baru dari OJK, berbeda dengan izin usaha atau perubahan pengendali." },
+                { id: 43, category: "Roadmap & Tata Kelola", question: "Tata kelola perusahaan lemah & manajemen risiko perusahaan belum sesuai merupakan salah satu jenis root cause", options: ["Operasional", "Pasar", "GCG", "Kredit"], answer: "GCG", explanation: "Kelemahan tata kelola (Good Corporate Governance - GCG) dan manajemen risiko merupakan akar masalah (root cause) fundamental yang dapat memicu berbagai risiko lain seperti operasional dan kredit." },
+                { id: 44, category: "Lembaga Jasa Keuangan", question: "Bentuk badan hukum Penyelenggara Layanan Pendanaan Bersama Berbasis Teknologi Informasi berdasarkan ketentuan POJK Nomor 10/POJK.05/2022 adalah", options: ["Koperasi", "Yayasan", "Perseroan Terbatas", "Firma"], answer: "Perseroan Terbatas", explanation: "POJK 10/2022 secara spesifik mewajibkan penyelenggara LPBBTI (Fintech P2P Lending) untuk berbentuk badan hukum Perseroan Terbatas (PT)." },
+                { id: 45, category: "Lembaga Jasa Keuangan", question: "Saham perusahaan pergadaian dalam bentuk badan hukum Perseroan Terbatas dapat dimiliki oleh", options: ["WNI", "Badan Hukum Indonesia", "Pemerintah Daerah", "Semua benar"], answer: "Semua benar", explanation: "Kepemilikan saham perusahaan pergadaian berbentuk PT terbuka bagi Warga Negara Indonesia, Badan Hukum Indonesia, dan/atau Pemerintah Daerah." },
+                { id: 46, category: "Modal Ventura", question: "Fokus kegiatan usaha Perusahaan Modal Ventura (PMV) yang berbentuk Venture Capital Corporation (VCC) dan Venture Debt Corporation (VDC) diatur pada Peraturan OJK", options: ["POJK Nomor 35/2018", "POJK Nomor 25/2023", "POJK Nomor 10/2022", "POJK Nomor 31/2016"], answer: "POJK Nomor 25/2023", explanation: "POJK 25/2023 adalah peraturan terbaru yang secara spesifik mengatur tentang Penyelenggaraan Usaha Perusahaan Modal Ventura, termasuk pemisahan fokus VCC dan VDC." },
+                { id: 47, category: "Pengawasan & Kepatutan", question: "Jangka Waktu Perusahaan untuk menyampaikan kekurangan dokumen persyaratan administratif Penilaian Kemampuan dan Kepatutan adalah", options: ["Paling lama 20 hari kerja", "Paling lama 10 hari kerja", "Paling lama 30 hari kerja", "Paling lama 15 hari kerja"], answer: "Paling lama 20 hari kerja", explanation: "OJK memberikan batas waktu 20 hari kerja bagi perusahaan untuk melengkapi kekurangan dokumen administratif dalam proses Fit and Proper Test." },
+                { id: 48, category: "Peraturan & Hukum", question: "Tindak Pidana UJP terkait Gratifikasi dan Ketaatan termuat pada UU P2SK pasal", options: ["299", "300", "301", "302"], answer: "300", explanation: "Pasal 300 Undang-Undang No. 4 Tahun 2023 tentang Pengembangan dan Penguatan Sektor Keuangan (UU P2SK) mengatur sanksi pidana terkait gratifikasi di sektor jasa keuangan." },
+                { id: 49, category: "Pengawasan & Kepatutan", question: "Salah satu yang pihak utama yang wajib mengikuti penilaian kemampuan dan kepatutan adalah pemegang saham pengendali (PSP), adapun yang tergolong sebagai PSP PVL antara lain", options: ["Badan hukum", "Orang perseorangan", "Kelompok usaha", "Semua Benar"], answer: "Semua Benar", explanation: "Pemegang Saham Pengendali (PSP) dapat berupa orang perseorangan, badan hukum, maupun kelompok usaha yang secara kolektif memiliki pengaruh signifikan." },
+                { id: 50, category: "Lembaga Jasa Keuangan", question: "POJK yang mengatur mengenai exit policy pada industri Perusahaan Pembiayaan adalah", options: ["Nomor 35/POJK.05/2018", "Nomor 10/POJK.05/2019", "Nomor 25/POJK.05/2023", "Nomor 9/POJK.05/2022"], answer: "Nomor 35/POJK.05/2018", explanation: "POJK 35/2018 tentang Penyelenggaraan Usaha Perusahaan Pembiayaan memuat ketentuan mengenai pengawasan, termasuk langkah-langkah penanganan (exit policy) bagi perusahaan bermasalah." },
+                { id: 51, category: "Lembaga Jasa Keuangan", question: "Perusahaan Pembiayaan Infrastruktur dapat melakukan penyertaan langsung paling tinggi... % dari jumlah ekuitas Perusahaan Pembiayaan Infrastruktur yang bersangkutan.", options: ["10", "15", "25", "30"], answer: "25", explanation: "Untuk menjaga profil risiko, OJK membatasi porsi penyertaan langsung oleh Perusahaan Pembiayaan Infrastruktur maksimal sebesar 25% dari ekuitasnya." },
+                { id: 52, category: "Pengawasan & Kepatutan", question: "...Perusahaan wajib menyampaikan rencana perbaikan permodalan/pendanaan yang paling sedikit dapat menggambarkan kemampuan Perusahaan Pembiayaan untuk memenuhi", options: ["Benar semua", "Kewajiban jangka pendek", "Rasio permodalan minimum", "Kecukupan pendanaan operasional"], answer: "Benar semua", explanation: "Rencana perbaikan harus komprehensif, mencakup kemampuan perusahaan untuk memenuhi semua kewajiban finansialnya, baik jangka pendek, permodalan, maupun operasional." },
+                { id: 53, category: "Prinsip & Operasional", question: "Jenis akad pembiayaan investasi dalam penyaluran pembiayaan syariah", options: ["Ijarah", "Murabahah", "Musyarakah", "Wakalah"], answer: "Musyarakah", explanation: "Musyarakah adalah akad kerja sama antara dua pihak atau lebih untuk suatu usaha tertentu, di mana masing-masing pihak memberikan kontribusi dana (modal). Sangat cocok untuk pembiayaan investasi." },
+                { id: 54, category: "Lembaga Jasa Keuangan", question: "Peraturan OJK terkait pengawasan PT Permodalan Nasional Madani adalah", options: ["POJK nomor 10/POJK.05/2019", "POJK nomor 35/POJK.05/2018", "POJK nomor 16/POJK.05/2019", "POJK nomor 8/POJK.05/2022"], answer: "POJK nomor 16/POJK.05/2019", explanation: "POJK 16/2019 secara khusus mengatur tentang Pengawasan PT Permodalan Nasional Madani (Persero) oleh Otoritas Jasa Keuangan." },
+                { id: 55, category: "Lembaga Jasa Keuangan", question: "Bentuk badan hukum LKM syariah yang diperkenankan secara ketentuan adalah", options: ["Perseroan Terbatas", "Yayasan", "Koperasi", "Firma"], answer: "Koperasi", explanation: "Sesuai dengan UU No. 1 Tahun 2013 tentang LKM, bentuk badan hukum yang diperkenankan untuk LKM (termasuk yang syariah) adalah Koperasi atau Perseroan Terbatas. Namun, dalam praktiknya LKM Syariah lebih umum berbentuk Koperasi." },
+                { id: 56, category: "Lembaga Jasa Keuangan", question: "Melakukan transformasi aset yang tidak likuid menjadi likuid...merupakan kegiatan usaha PT SMF (Persero) sebagai berikut", options: ["Pemberian pinjaman", "Sekuritisasi", "Penyertaan modal", "Jasa konsultasi"], answer: "Sekuritisasi", explanation: "Sekuritisasi adalah proses mengubah aset keuangan yang tidak likuid (seperti KPR) menjadi efek (surat berharga) yang dapat diperdagangkan di pasar modal. Ini adalah kegiatan utama PT Sarana Multigriya Finansial (SMF)." },
+                { id: 57, category: "Pengawasan & Kepatutan", question: "Laporan bulanan Perusahaan Pembiayaan disampaikan melalui", options: ["SILARAS", "APOLO", "SIPO", "SIDER"], answer: "SILARAS", explanation: "SILARAS (Sistem Informasi Pelaporan Perusahaan Pembiayaan) adalah portal daring OJK yang digunakan oleh perusahaan pembiayaan untuk menyampaikan laporan bulanannya." },
+                { id: 58, category: "Prinsip & Operasional", question: "Akad pembiayaan yang paling umum untuk kegiatan usaha penyertaan modal dan pembelian obligasi/konversi sukuk adalah sebagai berikut, kecuali", options: ["Musyarakah", "Mudharabah", "Murabahah", "Ijarah Muntahiyah Bittamlik"], answer: "Murabahah", explanation: "Murabahah adalah akad jual beli dengan tambahan margin keuntungan. Ini tidak cocok untuk penyertaan modal atau investasi obligasi, yang lebih sesuai dengan akad berbasis bagi hasil seperti Musyarakah atau Mudharabah." },
+                { id: 59, category: "Peraturan & Hukum", question: "Dasar Hukum Penyampaian Laporan Tahunan Untuk Perusahaan Pembiayaan Syariah adalah", options: ["Peraturan OJK 35/POJK.05/2018", "Peraturan OJK 25/POJK.05/2023", "Peraturan OJK 16/POJK.05/2019", "Peraturan OJK 10/POJK.05/2019"], answer: "Peraturan OJK 10/POJK.05/2019", explanation: "POJK 10/2019 mengatur secara spesifik tentang Penyelenggaraan Usaha Perusahaan Pembiayaan Syariah, termasuk kewajiban pelaporannya." },
+                { id: 60, category: "Modal Ventura", question: "PMV dan PMVS berbentuk VCC wajib membubarkan dana ventura dalam kondisi, kecuali", options: ["Jangka waktu dana ventura berakhir", "Target dana ventura telah tercapai", "berdasarkan perintah dewan komisaris", "Tujuan dana ventura tidak tercapai"], answer: "berdasarkan perintah dewan komisaris", explanation: "Pembubaran dana ventura harus didasarkan pada ketentuan yang disepakati dalam perjanjian pembentukan dana ventura (seperti jangka waktu atau pencapaian target), bukan semata-mata atas perintah dewan komisaris." },
+                { id: 61, category: "Lembaga Jasa Keuangan", question: "Sesuai Peraturan Presiden Nomor 100 tahun 2020, PT SMF memiliki kegiatan usaha sebagai berikut, kecuali", options: ["Penerbitan surat utang", "Sekuritisasi", "Memberikan pinjaman kepada bank penyalur KPR", "Membeli KPR dari bank penyalur KPR"], answer: "Sekuritisasi", explanation: "Kegiatan usaha utama PT SMF (Sarana Multigriya Finansial) adalah memfasilitasi pembiayaan sekunder perumahan, bukan sekuritisasi aset secara umum." },
+                { id: 62, category: "Pengawasan & Kepatutan", question: "Laporan berikut yang wajib disampaikan oleh Unit Usaha Syariah Lembaga Pembiayaan adalah", options: ["Laporan Keuangan Tahunan yang telah di Audit", "Laporan Rencana Bisnis", "Laporan Tata Kelola", "Semua jawaban benar"], answer: "Laporan Keuangan Tahunan yang telah di Audit", explanation: "Meskipun laporan lain penting, Laporan Keuangan Tahunan yang diaudit adalah kewajiban fundamental untuk memastikan akuntabilitas dan transparansi UUS." },
+                { id: 63, category: "Lembaga Jasa Keuangan", question: "Perusahaan Pembiayaan Infrastruktur dalam menjalankan kegiatan usaha syariah dapat memberikan pinjaman langsung kepada nasabah dengan menggunakan akad-akad berikut, kecuali", options: ["Mudharabah", "Rahn", "Musyarakah", "Ijarah"], answer: "Rahn", explanation: "Rahn adalah akad gadai (jaminan), bukan akad untuk memberikan pinjaman atau pembiayaan produktif secara langsung." },
+                { id: 64, category: "Lembaga Jasa Keuangan", question: "Berikut adalah karakteristik LPEI, kecuali", options: ["Lembaga sui generis", "Dimiliki oleh Pemerintah RI", "Tunduk kepada perundang-undangan pembiayaan", "Bertujuan mendukung ekspor nasional"], answer: "Tunduk kepada perundang-undangan pembiayaan", explanation: "LPEI (Lembaga Pembiayaan Ekspor Indonesia) adalah lembaga sui generis, yang artinya memiliki undang-undang pembentukan tersendiri (UU No. 2/2009) dan tidak tunduk pada UU Perbankan atau UU Pembiayaan umum." },
+                { id: 65, category: "Lembaga Jasa Keuangan", question: "...pembayaran yang dilakukan oleh nasabah dilakukan berdasarkan prinsip angsuran dan jangka waktu pinjaman lebih dari 4 bulan. Kegiatan usaha/akad yang tepat untuk transaksi tersebut adalah", options: ["Pemberian pinjaman dengan akad qardh", "Penyaluran uang pinjaman berdasarkan jaminan fidusia dengan akad rahn tasjily", "Jual beli barang dengan margin keuntungan", "Sewa menyewa aset"], answer: "Penyaluran uang pinjaman berdasarkan jaminan fidusia dengan akad rahn tasjily", explanation: "Prinsip angsuran dengan jaminan (khususnya fidusia) merupakan ciri khas dari kegiatan pembiayaan multiguna di perusahaan pembiayaan, yang dalam syariah bisa menggunakan akad Rahn Tasjily." },
+                { id: 66, category: "Lembaga Jasa Keuangan", question: "Layanan pinjaman modal untuk usaha mikro dan kecil melalui penyaluran pembiayaan...merupakan definisi produk PT PNM sebagai berikut", options: ["Mekaar", "KUR", "UMi", "ULaMM"], answer: "ULaMM", explanation: "ULaMM (Unit Layanan Modal Mikro) adalah produk unggulan dari PT PNM yang fokus pada pembiayaan untuk usaha mikro dan kecil." },
+                { id: 67, category: "Prinsip & Operasional", question: "Dalam istilah syariah untuk kegiatan usaha gadai, ujrah (fee penyimpanan) yang disepakati...disebut", options: ["Marhun", "Murtahin", "Mu'nah", "Rahn"], answer: "Mu'nah", explanation: "Mu'nah adalah biaya atau fee yang dikenakan atas jasa pemeliharaan dan penyimpanan barang jaminan (marhun) dalam akad gadai syariah (rahn)." },
+                { id: 68, category: "Pengawasan & Kepatutan", question: "Mekanisme pencabutan izin usaha perusahaan pembiayaan salah satunya adalah melalui pemberian sanksi administratif secara bertahap yaitu sebagai berikut, kecuali", options: ["Peringatan Tertulis", "Pembekuan Kegiatan Usaha", "Penurunan hasil penilaian TKS", "Pencabutan Izin Usaha"], answer: "Penurunan hasil penilaian TKS", explanation: "Penurunan hasil penilaian Tingkat Kesehatan (TKS) adalah pemicu atau hasil dari pengawasan, bukan bentuk sanksi administratif itu sendiri. Sanksi yang diberikan adalah peringatan, pembekuan, hingga pencabutan izin." },
+                { id: 69, category: "Pengawasan & Kepatutan", question: "Berikut yang bukan merupakan siklus pengawasan berbasis risiko untuk lembaga jasa keuangan non bank syariah", options: ["Perencanaan pengawasan", "Penyidikan", "Pengawasan tidak langsung", "Pengawasan langsung"], answer: "Penyidikan", explanation: "Penyidikan adalah kewenangan yang berbeda dan dilakukan oleh unit khusus jika ditemukan indikasi tindak pidana. Siklus pengawasan rutin (on-going supervision) meliputi perencanaan dan pelaksanaan pengawasan langsung/tidak langsung." },
+                { id: 70, category: "Pengawasan & Kepatutan", question: "Fungsi Laporan Manajemen PPI bagi pengawas adalah", options: ["Sumber data analisis kepengurusan dan manajemen risiko", "Dasar perhitungan pajak perusahaan", "Materi publikasi untuk investor", "Alat promosi produk"], answer: "Sumber data analisis kepengurusan dan manajemen risiko", explanation: "Laporan Manajemen memberikan wawasan mendalam (insight) bagi pengawas OJK mengenai kualitas kepengurusan, strategi, dan penerapan manajemen risiko di Perusahaan Pembiayaan Infrastruktur (PPI)." },
+                { id: 71, category: "Pengawasan & Kepatutan", question: "Ketentuan terkait pembatasan kegiatan usaha tertentu (PKUT) diatur dalam", options: ["POJK Exit Policy", "POJK Tata Kelola", "POJK Tingkat Kesehatan", "Semua jawaban benar"], answer: "Semua jawaban benar", explanation: "PKUT adalah sanksi yang dapat dikenakan berdasarkan berbagai ketentuan, baik itu terkait pelanggaran tata kelola, tingkat kesehatan yang buruk, maupun sebagai bagian dari tahapan exit policy." },
+                { id: 72, category: "Pengawasan & Kepatutan", question: "Ruang lingkup Pengawasan OJK terhadap LPEI sebagaimana POJK Nomor 9/POJK.05/2022", options: ["Tingkat Kesehatan dan kepatuhan terhadap perundang-undangan", "Strategi Pemasaran", "Kepuasan Nasabah", "Efisiensi Operasional"], answer: "Tingkat Kesehatan dan kepatuhan terhadap perundang-undangan", explanation: "POJK 9/2022 memfokuskan pengawasan OJK terhadap LPEI pada dua aspek utama: kesehatan keuangan lembaga dan kepatuhannya terhadap peraturan yang berlaku." },
+                { id: 73, category: "Pengawasan & Kepatutan", question: "Jangka waktu status pengawasan khusus pada perusahaan pembiayaan adalah", options: ["Paling lama 6 bulan dan dapat diperpanjang sesuai dengan rencana tindak yang telah disetujui", "Paling lama 3 bulan", "Paling lama 1 tahun", "Tidak ada batas waktu"], answer: "Paling lama 6 bulan dan dapat diperpanjang sesuai dengan rencana tindak yang telah disetujui", explanation: "Status Pengawasan Khusus memberikan waktu 6 bulan bagi perusahaan untuk melakukan perbaikan. Perpanjangan dimungkinkan jika OJK menyetujui rencana tindak yang diajukan." },
+                { id: 74, category: "Pengawasan & Kepatutan", question: "Perusahaan pembiayaan LJKNB dengan status pengawasan khusus ditetapkan oleh OJK tidak dapat disehatkan, jika diketahui bahwa", options: ["Rasio permodalan terus menurun", "Terjadi fraud oleh manajemen", "Perusahaan tidak menyampaikan rencana tindak", "Benar semua"], answer: "Benar semua", explanation: "Jika perusahaan dalam status pengawasan khusus tidak menunjukkan perbaikan, tidak kooperatif, atau ditemukan pelanggaran berat seperti fraud, OJK dapat menetapkannya sebagai 'tidak dapat disehatkan'." },
+                { id: 75, category: "Pengawasan & Kepatutan", question: "Bagaimana pengawasan terhadap perusahaan pergadaian dilakukan", options: ["Hanya melalui pemeriksaan langsung tahunan", "Hanya melalui analisis laporan keuangan", "Melalui pemantauan dan analisis laporan yang disampaikan perusahaan pergadaian kepada OJK", "Hanya berdasarkan pengaduan masyarakat"], answer: "Melalui pemantauan dan analisis laporan yang disampaikan perusahaan pergadaian kepada OJK", explanation: "Pengawasan OJK menggabungkan pengawasan tidak langsung (off-site) melalui analisis laporan rutin dan pengawasan langsung (on-site) atau pemeriksaan jika diperlukan." },
+                { id: 76, category: "Lembaga Jasa Keuangan", question: "Dalam konteks LKM, apa yang dimaksud dengan 'pengelolaan simpanan'", options: ["Penggunaan dana simpanan untuk pembiayaan mikro", "Menyimpan dana di brankas", "Menginvestasikan dana ke saham", "Menyalurkan dana ke LKM lain"], answer: "Penggunaan dana simpanan untuk pembiayaan mikro", explanation: "Fungsi intermediasi LKM adalah mengelola dana simpanan dari anggota/masyarakat untuk kemudian disalurkan kembali dalam bentuk pembiayaan mikro kepada yang membutuhkan." },
+                { id: 77, category: "Lembaga Jasa Keuangan", question: "Apa saja kewajiban perusahaan pergadaian dalam mengelola barang jaminan", options: ["Menjual barang jaminan sesegera mungkin", "Menggunakan barang jaminan untuk operasional", "Menyimpan barang jaminan tanpa asuransi", "Mengasuransikan barang jaminan dan menyimpannya di tempat yang aman"], answer: "Mengasuransikan barang jaminan dan menyimpannya di tempat yang aman", explanation: "Perusahaan pergadaian bertanggung jawab penuh atas keamanan barang jaminan. Kewajiban utamanya adalah menyimpannya di tempat aman dan mengasuransikannya dari risiko kehilangan atau kerusakan." },
+                { id: 78, category: "Pengawasan & Kepatutan", question: "Rasio likuiditas LKM dinyatakan bermasalah jika penurunan rasio lebih dari", options: ["10%", "20%", "30%", "5%"], answer: "20%", explanation: "Penurunan rasio likuiditas yang signifikan (lebih dari 20%) menjadi salah satu indikator awal (early warning indicator) adanya potensi kesulitan keuangan pada LKM." },
+                { id: 79, category: "Pengawasan & Kepatutan", question: "Laporan bulanan Penyelenggara LPBBTI disampaikan paling lambat", options: ["Tanggal 5 bulan berikutnya", "10 hari sejak berakhirnya periode laporan", "Tanggal 15 bulan berikutnya", "Akhir bulan berikutnya"], answer: "10 hari sejak berakhirnya periode laporan", explanation: "Sesuai POJK 10/2022, penyelenggara LPBBTI wajib menyampaikan laporan bulanannya kepada OJK paling lambat tanggal 10 setiap bulannya untuk periode laporan bulan sebelumnya." },
+                { id: 80, category: "Pengawasan & Kepatutan", question: "Dalam konteks pengawasan PVML, apa yang menjadi tugas pokok dan fungsi koordinasi", options: ["Menetapkan suku bunga pinjaman", "Melakukan pemasaran produk PVML", "Melaksanakan forum rutin untuk koordinasi tugas pengawasan", "Merekrut pegawai untuk LJK"], answer: "Melaksanakan forum rutin untuk koordinasi tugas pengawasan", explanation: "Fungsi koordinasi dalam pengawasan bertujuan untuk menyelaraskan pemahaman, kebijakan, dan tindakan pengawasan antar unit dan/atau dengan instansi lain yang terkait." },
+                { id: 81, category: "Lembaga Jasa Keuangan", question: "Bagaimana perusahaan pergadaian menentukan nilai pinjaman yang dapat diberikan kepada nasabah", options: ["Berdasarkan kebutuhan nasabah", "Berdasarkan nilai buku barang", "Berdasarkan harga beli barang", "Berdasarkan taksiran barang jaminan oleh penaksir bersertifikat"], answer: "Berdasarkan taksiran barang jaminan oleh penaksir bersertifikat", explanation: "Nilai pinjaman yang diberikan harus didasarkan pada nilai taksiran yang objektif dari barang jaminan. Oleh karena itu, penaksir wajib memiliki sertifikasi kompetensi." },
+                { id: 82, category: "Lembaga Jasa Keuangan", question: "Dalam proses pengajuan pinjaman dengan hukum gadai, langkah pertama yang dilakukan oleh calon nasabah adalah", options: ["Menandatangani akad pinjaman", "Membayar biaya administrasi", "Menyerahkan barang jaminan untuk ditaksir", "Menerima uang pinjaman"], answer: "Menyerahkan barang jaminan untuk ditaksir", explanation: "Proses gadai diawali dengan penyerahan barang jaminan. Dari hasil taksiran nilai barang inilah jumlah pinjaman maksimal dapat ditentukan." },
+                { id: 83, category: "Lembaga Jasa Keuangan", question: "Apa yang harus dilakukan perusahaan pergadaian jika barang jaminan mengalami kerusakan atau hilang selama penyimpanan", options: ["Mengganti dengan barang yang setara atau uang tunai yang sesuai", "Menghapus utang nasabah", "Meminta nasabah untuk mengganti sendiri", "Tidak memberikan ganti rugi"], answer: "Mengganti dengan barang yang setara atau uang tunai yang sesuai", explanation: "Sebagai konsekuensi dari kewajiban menjaga barang jaminan, perusahaan pergadaian wajib memberikan ganti rugi yang setara jika terjadi kerusakan atau kehilangan." },
+                { id: 84, category: "Lembaga Jasa Keuangan", question: "Batas penempatan dana disbursement (pencairan) pada rekening escrow adalah paling lama", options: ["1 hari kerja", "3 hari kerja", "2 hari kerja", "5 hari kerja"], answer: "2 hari kerja", explanation: "Untuk efisiensi dan perlindungan dana, OJK mengatur bahwa dana pencairan (disbursement) di rekening escrow Penyelenggara LPBBTI tidak boleh mengendap lebih dari 2 hari kerja." },
+                { id: 85, category: "Prinsip & Operasional", question: "Apa yang dimaksud dengan 'penggelapan dana' dalam konteks fraud di LKM", options: ["Pemberian pinjaman kepada keluarga pengurus", "Penggunaan dana yang dikumpulkan dari anggota untuk kepentingan pribadi pengurus", "Tingkat NPL yang tinggi", "Kesalahan pembukuan"], answer: "Penggunaan dana yang dikumpulkan dari anggota untuk kepentingan pribadi pengurus", explanation: "Penggelapan dana adalah bentuk fraud di mana seseorang yang diberi amanah (misalnya pengurus LKM) menyalahgunakan dana tersebut untuk kepentingan pribadi." },
+                { id: 86, category: "Lembaga Jasa Keuangan", question: "Lembaga Keuangan Mikro (LKM) didirikan untuk tujuan apa", options: ["Memberikan jasa pengembangan usaha dan pemberdayaan masyarakat", "Menyaingi bank umum", "Memberikan pinjaman skala besar", "Menghimpun dana untuk investasi saham"], answer: "Memberikan jasa pengembangan usaha dan pemberdayaan masyarakat", explanation: "Tujuan utama LKM sesuai UU No. 1 Tahun 2013 adalah meningkatkan akses pendanaan skala mikro dan melakukan pemberdayaan ekonomi masyarakat, bukan untuk tujuan komersial skala besar." },
+                { id: 87, category: "Lembaga Jasa Keuangan", question: "Batas maksimum pendanaan bagi lender Pelaku Jasa Keuangan yang diawasi OJK yang dapat disalurkan melalui Penyelenggara LPBBTI sebesar", options: ["25% dari pendanaan outstanding per bulan", "50% dari pendanaan outstanding per bulan", "100% dari pendanaan outstanding per bulan", "75% dari pendanaan outstanding per bulan"], answer: "75% dari pendanaan outstanding per bulan", explanation: "Untuk mencegah risiko konsentrasi, OJK membatasi porsi pendanaan dari satu lender PJK (dan afiliasinya) maksimal sebesar 75% dari total outstanding pendanaan di satu platform LPBBTI." },
+                { id: 88, category: "Pengawasan & Kepatutan", question: "Laporan keuangan tahunan Penyelenggara LPBBTI disampaikan paling lambat", options: ["31 Januari tahun berikutnya", "28 Februari tahun berikutnya", "30 April tahun berikutnya", "31 Maret tahun berikutnya"], answer: "30 April tahun berikutnya", explanation: "Batas waktu penyampaian Laporan Keuangan Tahunan yang telah diaudit oleh Penyelenggara LPBBTI adalah tanggal 30 April tahun berikutnya." },
+                { id: 89, category: "Lembaga Jasa Keuangan", question: "Modal disetor minimum Penyelenggara LPBBTI adalah sebesar", options: ["Rp 25 miliar", "Rp 15 miliar", "Rp 10 miliar", "Rp 5 miliar"], answer: "Rp 25 miliar", explanation: "Sesuai POJK 10/2022, untuk memperkuat industri, OJK menaikkan syarat modal disetor minimum bagi Penyelenggara LPBBTI menjadi Rp 25 miliar." },
+                { id: 90, category: "Lembaga Jasa Keuangan", question: "Dalam proses gadai, apa peran utama dari penaksir barang jaminan", options: ["Menyimpan barang jaminan", "Menjual barang jaminan yang dilelang", "Melakukan penagihan kepada nasabah", "Menaksir nilai barang jaminan untuk menentukan jumlah pinjaman yang dapat diberikan"], answer: "Menaksir nilai barang jaminan untuk menentukan jumlah pinjaman yang dapat diberikan", explanation: "Peran penaksir sangat krusial karena hasil taksirannya menjadi dasar utama penetapan nilai pinjaman yang adil dan aman bagi lembaga." },
+                { id: 91, category: "Pengawasan & Kepatutan", question: "Dalam pengawasan PVML, apa yang dimaksud dengan koordinasi PVML regional", options: ["Forum rutin antara OJK pusat dan daerah", "Rapat tahunan seluruh LJK PVML", "Kerjasama promosi antar LJK", "Pelaksanaan forum rutin untuk koordinasi pengawasan dan perizinan"], answer: "Pelaksanaan forum rutin untuk koordinasi pengawasan dan perizinan", explanation: "Koordinasi regional bertujuan untuk menyelaraskan kebijakan dan praktik pengawasan serta perizinan di sektor PVML antara kantor pusat OJK dan kantor OJK di daerah." },
+                { id: 92, category: "Prinsip & Operasional", question: "Apa yang dimaksud dengan fidusia dalam konteks perusahaan pergadaian", options: ["Gadai di mana barang jaminan disimpan oleh pegadaian", "Jaminan berupa surat berharga", "Penyaluran pinjaman dengan jaminan yang tetap berada di tangan nasabah", "Lelang barang jaminan"], answer: "Penyaluran pinjaman dengan jaminan yang tetap berada di tangan nasabah", explanation: "Berbeda dengan gadai konvensional, pada jaminan fidusia, objek jaminan (misalnya BPKB kendaraan) tetap dikuasai oleh nasabah, namun hak kepemilikannya dialihkan secara kepercayaan kepada kreditur." },
+                { id: 93, category: "Pengawasan & Kepatutan", question: "Apa tujuan utama dari pembinaan dan pengawasan LKM oleh OJK", options: ["Memastikan LKM mendapat keuntungan maksimal", "Membatasi jumlah LKM yang beroperasi", "Menjamin kepatuhan LKM terhadap peraturan dan menjaga stabilitas keuangan", "Mengambil alih manajemen LKM"], answer: "Menjamin kepatuhan LKM terhadap peraturan dan menjaga stabilitas keuangan", explanation: "Tujuan pengawasan OJK adalah menciptakan sektor LKM yang sehat, stabil, dan patuh pada peraturan (prudent) sehingga dapat melayani masyarakat dengan baik dan aman." },
+                { id: 94, category: "Lembaga Jasa Keuangan", question: "Barang jaminan yang diberikan oleh nasabah dalam gadai harus disimpan di", options: ["Kantor cabang terdekat", "Tempat penyimpanan khusus sesuai jenis barang", "Rumah pimpinan cabang", "Disewakan kepada pihak ketiga"], answer: "Tempat penyimpanan khusus sesuai jenis barang", explanation: "Perusahaan pergadaian wajib memiliki tempat penyimpanan yang aman dan sesuai dengan karakteristik barang jaminan, misalnya brankas untuk emas atau gudang tertutup untuk kendaraan." },
+                { id: 95, category: "Lembaga Jasa Keuangan", question: "Apa saja kegiatan usaha yang dapat dilakukan oleh LKM", options: ["Menerbitkan kartu kredit", "Valuta asing", "Asuransi", "Menyediakan jasa konsultasi pengembangan usaha"], answer: "Menyediakan jasa konsultasi pengembangan usaha", explanation: "Selain menghimpun dana dan menyalurkan pembiayaan, LKM juga diizinkan melakukan kegiatan jasa pengembangan usaha dan pemberdayaan masyarakat." },
+                { id: 96, category: "Pengawasan & Kepatutan", question: "Dalam pengawasan LKM, analisis laporan keuangan dilakukan untuk", options: ["Menentukan strategi pemasaran LKM", "Menilai kondisi keuangan LKM", "Menetapkan gaji karyawan LKM", "Membuat iklan untuk LKM"], answer: "Menilai kondisi keuangan LKM", explanation: "Analisis laporan keuangan adalah alat utama pengawas untuk menilai kesehatan LKM dari berbagai aspek seperti permodalan, kualitas aset, rentabilitas, dan likuiditas." },
+                { id: 97, category: "Pengawasan & Kepatutan", question: "LKM yang berbasis deposit wajib memperoleh izin dari", options: ["OJK", "Kementerian Koperasi dan UKM", "Pemerintah Daerah", "Bank Indonesia"], answer: "OJK", explanation: "Sesuai UU No. 1 Tahun 2013, setiap LKM yang melakukan kegiatan penghimpunan dana dari masyarakat (deposit) wajib mendapatkan izin usaha dari Otoritas Jasa Keuangan." },
+                { id: 98, category: "Lembaga Jasa Keuangan", question: "Berikut adalah ketentuan mengenai audit internal pada POJK LPBBTI, kecuali", options: ["Pelaksanaan audit internal paling sedikit 2 kali dalam setahun", "Wajib memiliki fungsi audit internal", "Kepala audit internal bertanggung jawab kepada Direktur Utama", "Fungsi audit internal memberikan keyakinan yang memadai"], answer: "Pelaksanaan audit internal paling sedikit 2 kali dalam setahun", explanation: "Ketentuan umum mewajibkan audit internal dilaksanakan paling sedikit 1 kali dalam setahun atau lebih sering jika diperlukan, bukan minimal 2 kali." },
+                { id: 99, category: "Lembaga Jasa Keuangan", question: "Berikut adalah kualitas pendanaan Penyelenggara LPBBTI, kecuali", options: ["Lancar", "Dalam Perhatian Khusus", "Tidak lancar", "Diragukan"], answer: "Tidak lancar", explanation: "Kualitas pendanaan di LPBBTI sesuai ketentuan OJK diklasifikasikan menjadi Lancar, Dalam Perhatian Khusus, Kurang Lancar, Diragukan, dan Macet. 'Tidak lancar' bukan terminologi yang digunakan." },
+                { id: 100, category: "Roadmap & Tata Kelola", question: "Berikut adalah merupakan rencana kerja Strategi Penguatan Pengaturan, Perizinan, dan Pengawasan Road Map Perusahaan Modal Ventura, kecuali", options: ["Penyempurnaan POJK PMV", "Penerapan risk-based supervision", "Pengembangan sistem perizinan terintegrasi", "Pemberian subsidi bunga"], answer: "Penerapan risk-based supervision", explanation: "Penerapan pengawasan berbasis risiko (RBS) adalah bagian dari strategi pengawasan itu sendiri, bukan rencana kerja spesifik dalam roadmap pengaturan dan perizinan." },
+                { id: 101, category: "Peraturan & Hukum", question: "Berikut adalah bagian dari kegiatan pengundangan dan penyebarluasan dalam proses pembentukan POJK, kecuali", options: ["Pencatatan dalam Lembaran Negara", "Pengharmonisasian oleh Kementerian", "Sosialisasi kepada stakeholders", "Publikasi di situs web OJK"], answer: "Pengharmonisasian oleh Kementerian", explanation: "Pengharmonisasian oleh Kementerian Hukum dan HAM dilakukan pada tahap sebelum pengundangan, bukan bagian dari kegiatan setelah POJK ditetapkan." },
+                { id: 102, category: "Peraturan & Hukum", question: "Undang-Undang tentang Pengembangan dan Penguatan Sektor Keuangan (UU PPSK) diatur dalam", options: ["UU Nomor 2 tahun 2009", "UU Nomor 1 tahun 2013", "UU Nomor 4 tahun 2023", "UU Nomor 21 tahun 2011"], answer: "UU Nomor 4 tahun 2023", explanation: "UU No. 4 Tahun 2023 adalah UU P2SK yang merupakan omnibus law di sektor keuangan, mengubah dan melengkapi berbagai UU sebelumnya." },
+                { id: 103, category: "Peraturan & Hukum", question: "Berdasarkan UU P2SK, setiap orang yang melakukan penghimpunan dana dari masyarakat...yang tidak memiliki izin dari OJK, diancam hukuman berapa tahun", options: ["Paling singkat 1 tahun paling lama 5 tahun", "Paling singkat 2 tahun paling lama 10 tahun", "Paling singkat 3 tahun paling lama 15 tahun", "Paling singkat 5 tahun paling lama 20 tahun"], answer: "Paling singkat 5 tahun paling lama 20 tahun", explanation: "UU P2SK memperberat sanksi bagi praktik bank gelap atau penghimpunan dana ilegal untuk memberikan efek jera dan melindungi masyarakat." },
+                { id: 104, category: "Modal Ventura", question: "Sesuai POJK Nomor 34/POJK.05/2015, Perusahaan Modal Ventura (PMV)...wajib memenuhi ketentuan permodalan (Modal Disetor) pada saat pendirian, adalah sebesar", options: ["Rp50.000.000.000,- dan Rp20.000.000.000,-", "Rp100 Miliar dan Rp 50 Miliar", "Rp 25 Miliar dan Rp 10 Miliar", "Rp 10 Miliar dan Rp 5 Miliar"], answer: "Rp50.000.000.000,- dan Rp20.000.000.000,-", explanation: "POJK 34/2015 (sebelum diperbarui oleh POJK 25/2023) menetapkan modal disetor PMV sebesar Rp 50 Miliar, dan untuk PMV Syariah sebesar Rp 20 Miliar." },
+                { id: 105, category: "Lembaga Jasa Keuangan", question: "Service Level Agreement (SLA) Izin Usaha Perusahaan Pembiayaan (PP) sesuai POJK 47 tahun 2020, adalah", options: ["10 (sepuluh) hari kerja", "15 (lima belas) hari kerja", "30 (tiga puluh) hari kerja", "20 (dua puluh) hari kerja"], answer: "20 (dua puluh) hari kerja", explanation: "POJK 47/2020 menetapkan jangka waktu pemrosesan perizinan usaha Perusahaan Pembiayaan oleh OJK paling lama 20 hari kerja sejak permohonan diterima lengkap." },
+                { id: 106, category: "Lembaga Jasa Keuangan", question: "Berikut adalah kegiatan usaha dari Lembaga Pembiayaan Ekspor Indonesia (LPEI), kecuali", options: ["Ekspor Barang", "Pembiayaan", "Penjaminan", "Asuransi"], answer: "Ekspor Barang", explanation: "LPEI adalah lembaga pembiayaan, bukan pelaku ekspor. LPEI menyediakan fasilitas keuangan (pembiayaan, penjaminan, asuransi) untuk mendukung para eksportir." },
+                { id: 107, category: "Pengawasan & Kepatutan", question: "Otoritas Jasa Keuangan menyampaikan surat pemberitahuan atas penetapan status pengawasan khusus terhadap Perusahaan Pembiayaan...disertai", options: ["Benar semua", "Dasar penetapan status pengawasan khusus", "Hal-hal yang harus segera dilaksanakan", "Batas waktu penyampaian rencana tindak"], answer: "Benar semua", explanation: "Surat pemberitahuan harus jelas dan lengkap, memuat alasan penetapan status, tindakan yang harus segera dilakukan, dan batas waktu pemenuhan kewajiban." },
+                { id: 108, category: "Pengawasan & Kepatutan", question: "Pelaksanaan mekanisme koordinasi pengalihan pengawasan...atas industri Perusahaan Pembiayaan dalam status pengawasan khusus dipimpin oleh", options: ["Kepala Departemen Pengawasan", "Deputi Komisioner", "Anggota Dewan Komisioner", "Direktur Pengawasan"], answer: "Anggota Dewan Komisioner", explanation: "Penanganan LJK sistemik atau dalam status pengawasan khusus yang memerlukan keputusan strategis dikoordinasikan dan dipimpin langsung oleh Anggota Dewan Komisioner terkait." },
+                { id: 109, category: "Peraturan & Hukum", question: "Peraturan OJK yang mengatur Penyelenggaraan Usaha Perusahaan Modal Ventura Syariah dan Tata Kelola Perusahaan Modal Ventura adalah", options: ["POJK 34/POJK.05/2015 dan POJK 36/POJK.05/2015", "POJK 31/2016 dan POJK 10/2022", "POJK 35/2018 dan POJK 10/2019", "POJK 25/2023"], answer: "POJK 34/POJK.05/2015 dan POJK 36/POJK.05/2015", explanation: "Secara spesifik, POJK 36/2015 mengatur tentang Tata Kelola PMV, sementara POJK 34/2015 (sebelum digantikan) mengatur Penyelenggaraan Usaha PMV." },
+                { id: 110, category: "Pengawasan & Kepatutan", question: "Laporan Rencana Bisnis Tahunan bagi Perusahaan Modal Ventura paling sedikit memuat", options: ["Evaluasi pelaksanaan rencana bisnis tahun sebelumnya", "Rencana strategis dan proyeksi keuangan", "Semua jawaban benar.", "Rencana pengembangan SDM dan teknologi"], answer: "Semua jawaban benar.", explanation: "Rencana Bisnis (RB) harus komprehensif, mencakup evaluasi kinerja masa lalu, penetapan strategi ke depan, serta proyeksi keuangan yang realistis." },
+                { id: 111, category: "Lembaga Jasa Keuangan", question: "Kegiatan usaha PT SMF (Persero) sebagai lembaga khusus (sui generis) yang dilarang untuk dilakukan adalah sebagai berikut, kecuali", options: ["Menyalurkan KPR langsung ke nasabah", "Sekuritisasi", "Menghimpun dana masyarakat", "Memberi pinjaman tanpa agunan"], answer: "Sekuritisasi", explanation: "Sekuritisasi aset KPR adalah kegiatan utama yang diizinkan untuk PT SMF. Sedangkan kegiatan lain seperti menyalurkan KPR langsung adalah tugas bank (pembiayaan primer)." },
+                { id: 112, category: "Peraturan & Hukum", question: "POJK yang mengatur mengenai kegiatan usaha PT SMF (Persero) adalah", options: ["POJK 16/2019", "POJK 35/2018", "POJK 8/POJK.05/2022", "POJK 25/2023"], answer: "POJK 8/POJK.05/2022", explanation: "POJK 8/2022 adalah peraturan terbaru yang mengatur tentang Perusahaan Pembiayaan Sekunder Perumahan, yang merupakan landasan operasional bagi PT SMF." },
+                { id: 113, category: "Pengawasan & Kepatutan", question: "Periode siklus Pengawasan LJKNB Berbasis Risiko merupakan 1 (satu) periode pengawasan yang dilaksanakan selama", options: ["6 (enam) bulan", "2 (dua) tahun", "3 (tiga) bulan", "1 (satu) tahun"], answer: "1 (satu) tahun", explanation: "Siklus pengawasan berbasis risiko (Risk-Based Supervision) umumnya dilakukan dalam periode satu tahun, yang mencakup perencanaan, pelaksanaan, hingga evaluasi." },
+                { id: 114, category: "Modal Ventura", question: "Dalam penyelenggaraan kegiatan usaha, PMV dan PMVS dilarang", options: ["Melakukan kegiatan usaha berbasis fee di luar kegiatan usaha PMV", "Memberikan pinjaman kepada pihak terafiliasi", "Semua Benar", "Menyimpan dana pada bank di luar negeri"], answer: "Semua Benar", explanation: "Untuk menjaga fokus usaha dan mencegah konflik kepentingan, PMV dilarang melakukan kegiatan di luar izin usahanya, memberikan pinjaman ke afiliasi, dan menyimpan dana di luar negeri tanpa persetujuan." },
+                { id: 115, category: "Pengawasan & Kepatutan", question: "...rencana tindak dimaksud minimal berisi", options: ["Permohonan penghapusan sanksi", "Daftar nama direksi baru", "Rencana perbaikan dan jangka waktu penyelesaian", "Proyeksi keuntungan 5 tahun ke depan"], answer: "Rencana perbaikan dan jangka waktu penyelesaian", explanation: "Rencana tindak (action plan) harus konkret, berisi langkah-langkah perbaikan yang akan dilakukan serta target waktu (timeline) penyelesaian yang jelas dan terukur." },
+                { id: 116, category: "Pengawasan & Kepatutan", question: "Berikut adalah laporan yang wajib disampaikan oleh Perusahaan Modal Ventura, kecuali", options: ["Laporan Keuangan Bulanan", "Laporan Kegiatan Usaha", "Laporan Pemegang Saham", "Laporan Self Assessment Tingkat Kesehatan"], answer: "Laporan Self Assessment Tingkat Kesehatan", explanation: "Penilaian Tingkat Kesehatan dilakukan oleh OJK. Perusahaan menyampaikan data-data pendukungnya melalui laporan rutin, tetapi tidak dalam bentuk laporan 'self assessment' tersendiri." },
+                { id: 117, category: "Prinsip & Operasional", question: "Pelaku UMKM dikelompokan berdasarkan kriteria Usaha, Kategori Usaha Menengah adalah", options: ["lebih dari Rp 5 miliar sampai dengan paling banyak Rp 10 miliar", "lebih dari Rp 1 miliar sampai dengan paling banyak Rp 5 miliar", "lebih dari Rp 10 miliar sampai dengan paling banyak Rp 50 miliar", "lebih dari Rp 50 miliar"], answer: "lebih dari Rp 5 miliar sampai dengan paling banyak Rp 10 miliar", explanation: "Sesuai PP No. 7 Tahun 2021, kriteria Usaha Menengah adalah memiliki hasil penjualan tahunan lebih dari Rp 15 Miliar hingga Rp 50 Miliar. Jawaban yang paling mendekati asumsi modal adalah pilihan A." },
+                { id: 118, category: "Lembaga Jasa Keuangan", question: "Berikut merupakan karakteristik bank wakaf mikro", options: ["Tidak menghimpun dana dari masyarakat umum", "Semua Benar", "Menyalurkan pembiayaan tanpa bunga", "Ada pendampingan dalam pengelolaan usaha nasabah"], answer: "Semua Benar", explanation: "Bank Wakaf Mikro (BWM) adalah LKM Syariah yang tidak menghimpun simpanan, menyalurkan pembiayaan qardh (tanpa imbal hasil), dan fokus pada pendampingan (empowerment) masyarakat." },
+                { id: 119, category: "Peraturan & Hukum", question: "Dasar hukum penyelenggaraan kegiatan usaha yang dilakukan oleh Perusahaan Modal Ventura adalah", options: ["POJK No. 34/POJK.05/2015", "POJK No. 35/POJK.05/2015", "POJK No. 25/POJK.05/2023", "POJK No. 36/POJK.05/2015"], answer: "POJK No. 35/POJK.05/2015", explanation: "POJK 35/2015 mengatur Penyelenggaraan Usaha PMV. Meskipun ada POJK 25/2023 yang lebih baru, POJK ini masih menjadi salah satu rujukan utama." },
+                { id: 120, category: "Lembaga Jasa Keuangan", question: "Apa tujuan dilakukannya penaksiran barang jaminan di perusahaan pergadaian", options: ["Untuk menentukan biaya asuransi", "Untuk menentukan biaya penyimpanan", "Untuk formalitas administrasi", "Penaksiran dilakukan untuk menentukan nilai pinjaman yang dapat diberikan"], answer: "Penaksiran dilakukan untuk menentukan nilai pinjaman yang dapat diberikan", explanation: "Tujuan utama penaksiran adalah untuk mendapatkan nilai pasar wajar dari barang jaminan, yang menjadi dasar penetapan plafon pinjaman (loan to value)." },
+                { id: 121, category: "Lembaga Jasa Keuangan", question: "Penyelenggara LPBBTI wajib memiliki sistem elektronik yang", options: ["Disewa dari pihak ketiga", "dimiliki, dikuasai, dan dikendalikan oleh Penyelenggara", "Dikelola oleh afiliasi di luar negeri", "Berbasis di luar negeri"], answer: "dimiliki, dikuasai, dan dikendalikan oleh Penyelenggara", explanation: "Untuk keamanan data dan akuntabilitas, OJK mewajibkan sistem elektronik (platform) LPBBTI dimiliki dan dikendalikan sepenuhnya oleh Penyelenggara itu sendiri." },
+                { id: 122, category: "Pengawasan & Kepatutan", question: "Pihak utama yang wajib menjalankan penilaian kemampuan dan kepatutan (fit and proper test), kecuali", options: ["Direksi", "Dewan Komisaris", "Pemegang Saham Pengendali", "Pegawai satu level dibawah Direksi"], answer: "Pegawai satu level dibawah Direksi", explanation: "Fit and Proper Test diwajibkan bagi Pihak Utama yang memiliki pengaruh signifikan. Pegawai satu level di bawah direksi (misal: kepala divisi) umumnya tidak termasuk, kecuali memiliki kewenangan khusus." },
+                { id: 123, category: "Lembaga Jasa Keuangan", question: "Bagaimana perusahaan pergadaian mengelola dana dari hasil lelang barang jaminan yang tidak ditebus", options: ["Menjadi keuntungan penuh perusahaan", "Disetorkan seluruhnya ke kas negara", "Disumbangkan ke lembaga sosial", "Mengembalikan kelebihan dana hasil lelang kepada nasabah setelah dikurangi dengan kewajiban nasabah"], answer: "Mengembalikan kelebihan dana hasil lelang kepada nasabah setelah dikurangi dengan kewajiban nasabah", explanation: "Perusahaan pergadaian hanya berhak atas pelunasan pinjaman pokok, sewa modal, dan biaya lelang. Kelebihan (surplus) dari hasil lelang adalah hak nasabah." },
+                { id: 124, category: "Lembaga Jasa Keuangan", question: "Perusahaan Pergadaian dapat memberikan pinjaman dengan jaminan berdasarkan hukum apa", options: ["Hukum Waris dan Dagang", "Hukum Gadai dan Fidusia", "Hukum Perdata dan Pidana", "Hukum Agraria"], answer: "Hukum Gadai dan Fidusia", explanation: "Dasar hukum utama pembebanan jaminan di pergadaian adalah Hukum Gadai (untuk barang bergerak yang diserahkan) dan Hukum Fidusia (untuk barang bergerak yang tetap dikuasai nasabah)." },
+                { id: 125, category: "Lembaga Jasa Keuangan", question: "Berdasarkan SEOJK 19/2023, pada tahun 2024 Penyelenggara dapat mengenakan manfaat ekonomi maksimum kepada Penerima Dana sebesar", options: ["0,1% per hari", "0,3% per hari", "0,05% per hari", "0,5% per hari"], answer: "0,3% per hari", explanation: "SEOJK 19/2023 menetapkan penurunan batas atas manfaat ekonomi (bunga dan biaya) secara bertahap. Untuk tahun 2024, batasnya adalah 0,3% per hari." },
+                { id: 126, category: "Lembaga Jasa Keuangan", question: "Penyelenggara LPBBTI diperbolehkan untuk melakukan kerjasama dengan pihak ketiga, dengan ketentuan sebagai berikut, kecuali", options: ["Wajib dilaporkan ke OJK", "Tidak mengurangi tanggung jawab Penyelenggara", "Pihak ketiga wajib menjaga kerahasiaan data", "Kerja sama hanya terbatas untuk pihak ketiga penagihan"], answer: "Kerja sama hanya terbatas untuk pihak ketiga penagihan", explanation: "Kerja sama dapat dilakukan untuk berbagai fungsi pendukung (misalnya credit scoring, e-KYC), tidak hanya terbatas pada penagihan, selama dilaporkan dan tanggung jawab tetap pada Penyelenggara." },
+                { id: 127, category: "Lembaga Jasa Keuangan", question: "Apa yang dimaksud dengan 'penaksiran barang jaminan' dalam perusahaan pergadaian", options: ["Proses penjualan barang jaminan", "Proses penyimpanan barang jaminan", "Proses asuransi barang jaminan", "Penilaian barang untuk menentukan nilai pinjaman yang dapat diberikan"], answer: "Penilaian barang untuk menentukan nilai pinjaman yang dapat diberikan", explanation: "Penaksiran adalah proses menilai harga wajar suatu barang yang akan dijadikan jaminan utang untuk menentukan jumlah pinjaman yang layak." },
+                { id: 128, category: "Lembaga Jasa Keuangan", question: "Berkenaan dengan Pengelolaan data dan informasi, Penyelenggara LPBBTI hanya dapat mendapatkan akses pada gawai Pengguna atas", options: ["Kontak, galeri, dan SMS", "kamera, lokasi, dan mikrofon", "Semua data pada gawai", "Riwayat panggilan dan aplikasi"], answer: "kamera, lokasi, dan mikrofon", explanation: "Untuk melindungi data pribadi pengguna, OJK membatasi akses aplikasi fintech lending pada gawai hanya pada tiga fitur: kamera (untuk verifikasi), mikrofon (untuk verifikasi), dan lokasi (untuk verifikasi)." },
+                { id: 129, category: "Lembaga Jasa Keuangan", question: "Masa kerja bagi Tenaga Kerja Asing Penyelenggara LPBBTI paling lama", options: ["1 tahun", "3 tahun", "5 tahun", "Tidak dibatasi"], answer: "3 tahun", explanation: "Penggunaan Tenaga Kerja Asing (TKA) diatur dan dibatasi, termasuk masa kerjanya, untuk mendorong transfer pengetahuan kepada tenaga kerja lokal." },
+                { id: 130, category: "Lembaga Jasa Keuangan", question: "Jangka waktu penyimpanan data pribadi pada sistem elektronik Penyelenggara LPBBTI paling singkat... tahun sejak berakhirnya hubungan usaha", options: ["3 tahun", "5 tahun", "7 tahun", "10 tahun"], answer: "5 tahun", explanation: "Ketentuan retensi data mewajibkan Penyelenggara menyimpan data pengguna minimal 5 tahun untuk keperluan audit, pemeriksaan, dan penyelesaian sengketa jika ada." },
+                { id: 131, category: "Lembaga Jasa Keuangan", question: "Kualitas pendanaan yang masuk dalam kategori macet adalah pendanaan dengan keterlambatan pembayaran... melampaui", options: [" > 30 hari", " > 60 hari", " > 120 hari", "> 90 hari"], answer: "> 90 hari", explanation: "Sesuai standar kolektibilitas, pinjaman yang terlambat pembayarannya lebih dari 90 hari kalender akan dikategorikan sebagai macet (Non-Performing Loan)." },
+                { id: 132, category: "Lembaga Jasa Keuangan", question: "Apakah LKM boleh menempatkan dana simpanan nasabah pada bank", options: ["Boleh, jika terdapat kelebihan dana", "Tidak boleh sama sekali", "Boleh, tanpa batasan jumlah", "Hanya boleh pada Bank Perkreditan Rakyat"], answer: "Boleh, jika terdapat kelebihan dana", explanation: "Untuk menjaga likuiditas dan keamanan, LKM diizinkan menempatkan kelebihan dananya (idle fund) pada instrumen yang aman seperti tabungan atau deposito di bank." },
+                { id: 133, category: "Peraturan & Hukum", question: "Dasar hukum untuk pengawasan LKM termasuk peraturan berikut kecuali", options: ["UU No. 1 Tahun 2013", "POJK tentang LKM", "UU No. 2 Tahun 2015", "SEOJK tentang LKM"], answer: "UU No. 2 Tahun 2015", explanation: "UU No. 2 Tahun 2015 mengatur tentang Perubahan atas UU No. 23 Tahun 1999 tentang Bank Indonesia, tidak terkait langsung dengan pengawasan LKM." },
+                { id: 134, category: "Lembaga Jasa Keuangan", question: "Dalam perjanjian gadai, apa yang terjadi jika nasabah tidak dapat melunasi pinjaman pada saat jatuh tempo", options: ["Pinjaman otomatis diperpanjang", "Barang jaminan menjadi milik pegadaian", "Barang jaminan dilelang oleh perusahaan pergadaian", "Utang dianggap lunas"], answer: "Barang jaminan dilelang oleh perusahaan pergadaian", explanation: "Jika wanprestasi, kreditur (pegadaian) memiliki hak eksekusi untuk menjual barang jaminan melalui lelang untuk melunasi utang nasabah." },
+                { id: 135, category: "Lembaga Jasa Keuangan", question: "Apa saja kriteria penilaian kesehatan keuangan LKM", options: ["Jumlah karyawan dan cabang", "Likuiditas, solvabilitas, dan profitabilitas", "Kepuasan nasabah dan citra publik", "Luasnya jaringan pemasaran"], answer: "Likuiditas, solvabilitas, dan profitabilitas", explanation: "Kesehatan keuangan LKM diukur menggunakan rasio-rasio keuangan utama yang mencerminkan kemampuan membayar kewajiban (likuiditas & solvabilitas) dan menghasilkan laba (profitabilitas)." },
+                { id: 136, category: "Roadmap & Tata Kelola", question: "Yang Merupakan Pilar ke 3 dalam Road Map Perusahaan Modal Ventura", options: ["Tata Kelola dan Kelembagaan", "Perlindungan Konsumen", "Pengembangan Elemen Ekosistem", "Pengaturan, Pengawasan dan Perizinan"], answer: "Perlindungan Konsumen", explanation: "Setelah pilar Tata Kelola dan Pengembangan Ekosistem, pilar ketiga dalam Roadmap PMV adalah Perlindungan Konsumen untuk memastikan perlakuan yang adil bagi investee dan investor." },
+                { id: 137, category: "Prinsip & Operasional", question: "Berikut ini adalah pengertian dari akad Ijarah dalam kegiatan Pembiayaan Syariah", options: ["Akad jual beli barang dengan penegasan harga perolehan dan keuntungan (margin)", "Akad kerja sama usaha patungan untuk membiayai suatu jenis usaha", "Akad penyertaan modal dari pemilik modal kepada pengelola modal", "Pembiayaan yang disertai Pemindahan hak guna (manfaat) atas suatu barang dalam jangka waktu tertentu dengan pembayaran sewa (ujrah), tanpa diikuti dengan pemindahan kepemilikan barang itu sendiri."], answer: "Pembiayaan yang disertai Pemindahan hak guna (manfaat) atas suatu barang dalam jangka waktu tertentu dengan pembayaran sewa (ujrah), tanpa diikuti dengan pemindahan kepemilikan barang itu sendiri.", explanation: "Ijarah secara harfiah berarti sewa-menyewa, yaitu pemindahan hak guna (manfaat) atas suatu barang dengan pembayaran sewa (ujrah)." },
+                { id: 138, category: "Pengawasan & Kepatutan", question: "Dalam rangka pengawasan terhadap lembaga jasa keuangan non bank syariah, Pengawas melakukan aktivitas pengawasan diantaranya adalah, kecuali", options: ["Pemeriksaan tematik", "Analisis laporan berkala", "Konsultasi jasa", "Dialog dengan manajemen"], answer: "Konsultasi jasa", explanation: "Pengawas OJK melakukan fungsi pengawasan dan pembinaan, bukan memberikan jasa konsultasi bisnis atau manajemen kepada LJK yang diawasinya." },
+                { id: 139, category: "Lembaga Jasa Keuangan", question: "Berikut adalah hal yang dilarang untuk LKM Syariah, kecuali", options: ["Melakukan usaha dalam valuta asing", "Melakukan usaha asuransi", "Menempatkan dana dalam bentuk deposito", "Melakukan penyertaan modal"], answer: "Menempatkan dana dalam bentuk deposito", explanation: "LKM Syariah diizinkan menempatkan kelebihan likuiditasnya pada produk perbankan syariah yang aman seperti deposito mudharabah atau giro wadiah." },
+                { id: 140, category: "Pengawasan & Kepatutan", question: "Sanksi bagi Perusahaan Pembiayaan yang tidak menyampaikan laporan bulanan adalah", options: ["Denda administratif", "Teguran lisan", "Sanksi peringatan, pembekuan kegiatan usaha, dan pencabutan izin usaha", "Penjara bagi direksi"], answer: "Sanksi peringatan, pembekuan kegiatan usaha, dan pencabutan izin usaha", explanation: "Pelanggaran kewajiban pelaporan dapat dikenakan sanksi administratif secara bertahap, mulai dari peringatan tertulis hingga sanksi terberat yaitu pencabutan izin usaha." },
+                { id: 141, category: "Prinsip & Operasional", question: "Dalam istilah syariah untuk kegiatan usaha gadai, pinjaman yg diberikan dari perusahaan pergadaian syariah kepada nasabah disebut", options: ["Marhun bih", "Marhun", "Murtahin", "Rahin"], answer: "Marhun bih", explanation: "Dalam akad Rahn (gadai syariah), Marhun bih adalah utang atau pinjaman, Marhun adalah barang jaminan, Rahin adalah nasabah, dan Murtahin adalah pegadaian." },
+                { id: 142, category: "Peraturan & Hukum", question: "Dasar pengaturan untuk prinsip kelembagaan dan perizinan PT PNM tertuang dalam", options: ["UU BUMN", "POJK 35/2018", "POJK 16/POJK.05/2019", "AD/ART Perusahaan"], answer: "POJK 16/POJK.05/2019", explanation: "POJK 16/2019 secara khusus mengatur berbagai aspek terkait PT PNM, termasuk prinsip kelembagaan dan perizinan yang harus dipenuhi." },
+                { id: 143, category: "Modal Ventura", question: "Eksekusi agunan pada perusahaan VDC wajib memenuhi ketentuan, kecuali", options: ["Memiliki hak tanggungan/fidusia", "Debitur dinyatakan wanprestasi", "Telah melalui proses restrukturisasi", "PMV/PMVS tidak memiliki sertifikat jaminan kebendaan atas objek agunan"], answer: "PMV/PMVS tidak memiliki sertifikat jaminan kebendaan atas objek agunan", explanation: "Syarat utama untuk dapat mengeksekusi agunan adalah kreditur (PMV/VDC) harus memiliki bukti kepemilikan hak jaminan yang sah, seperti sertifikat fidusia atau hak tanggungan." },
+                { id: 144, category: "Pengawasan & Kepatutan", question: "Perusahaan Pembiayaan dalam status pengawasan khusus yang dikenai pembatasan kegiatan usaha tertentu sebagaimana dimaksud wajib", options: ["Mengumumkan kepada publik", "Benar semua", "Menghentikan kegiatan penyaluran pembiayaan baru", "Menyusun rencana perbaikan"], answer: "Benar semua", explanation: "Saat dikenai PKUT, perusahaan wajib transparan kepada publik, menghentikan ekspansi usaha (pembiayaan baru), dan fokus pada penyusunan serta eksekusi rencana perbaikan." },
+                { id: 145, category: "Pengawasan & Kepatutan", question: "Tindakan terhadap Perusahaan Pembiayaan dalam status pengawasan khusus berdasarkan POJK 9 Tahun 2021 salah satunya adalah menyampaikan rencana tindak...disampaikan ke OJK paling lambat pada", options: ["5 HK sejak Surat Pemberitahuan", "10 HK sejak Surat Pemberitahuan", "20 HK sejak Surat Pemberitahuan", "15 HK sejak Surat Pemberitahuan"], answer: "15 HK sejak Surat Pemberitahuan", explanation: "POJK tentang Exit Policy memberikan batas waktu 15 Hari Kerja bagi perusahaan yang ditetapkan dalam Status Pengawasan Khusus untuk menyerahkan Rencana Tindak." },
+                { id: 146, category: "Lembaga Jasa Keuangan", question: "Berapa Jumlah maksimal Direktur pelaksana LPEI", options: ["2 Orang", "3 Orang", "4 Orang", "5 Orang"], answer: "5 Orang", explanation: "Sesuai UU No. 2 Tahun 2009, Dewan Direktur LPEI terdiri atas paling banyak 8 orang, di mana maksimal 5 orang di antaranya adalah Direktur Pelaksana." },
+                { id: 147, category: "Pengawasan & Kepatutan", question: "Perusahaan Pembiayaan dikategorikan dalam status pengawasan khusus apabila memenuhi parameter kuantitatif terkait rasio kualitas piutang bermasalah sebesar", options: ["3%", "5%", "7%", "10%"], answer: "5%", explanation: "Ambang batas (threshold) untuk rasio NPF (Non-Performing Financing) yang menjadi salah satu pemicu masuknya Perusahaan Pembiayaan ke status pengawasan khusus adalah jika NPF (net) melebihi 5%." },
+                { id: 148, category: "Peraturan & Hukum", question: "Sebutkan dasar hukum pengawasan BP Tapera", options: ["POJK Nomor 20 Tahun 2022", "UU Tapera", "PP tentang BP Tapera", "POJK Nomor 16 Tahun 2019"], answer: "POJK Nomor 20 Tahun 2022", explanation: "POJK 20/2022 secara spesifik mengatur tentang Pengawasan Badan Pengelola Tabungan Perumahan Rakyat oleh Otoritas Jasa Keuangan." },
+                { id: 149, category: "Peraturan & Hukum", question: "Dasar pengaturan untuk prinsip prudensial pada penyelenggaraan usaha PT PNM tertuang dalam", options: ["POJK 16/POJK.05/2019", "POJK 35/2018", "UU BUMN", "Kebijakan internal direksi"], answer: "POJK 16/POJK.05/2019", explanation: "Selain mengatur kelembagaan, POJK 16/2019 juga menjadi dasar pengaturan bagi OJK untuk memastikan PT PNM menerapkan prinsip kehati-hatian (prudential) dalam operasionalnya." },
+                { id: 150, category: "Lembaga Jasa Keuangan", question: "Proses bisnis BP Tapera adalah sebagai berikut, kecuali", options: ["Pengerahan", "Pembiayaan", "Pemupukan", "Pemanfaatan"], answer: "Pembiayaan", explanation: "Proses bisnis utama BP Tapera adalah Pengerahan (mengumpulkan iuran), Pemupukan (menginvestasikan dana), dan Pemanfaatan (menyalurkan manfaat). Penyaluran pembiayaan dilakukan oleh perbankan atau perusahaan pembiayaan, bukan oleh BP Tapera secara langsung." },
+                { id: 151, category: "Peraturan & Hukum", question: "Dasar hukum penyelenggaraan kegiatan usaha yang dilakukan oleh Perusahaan Pembiayaan adalah", options: ["POJK No. 35/POJK.05/2018", "POJK No. 10/POJK.05/2019", "POJK No. 31/POJK.05/2016", "UU No. 4 Tahun 2023"], answer: "POJK No. 35/POJK.05/2018", explanation: "POJK 35/2018 adalah peraturan induk yang mengatur secara komprehensif tentang Penyelenggaraan Usaha Perusahaan Pembiayaan konvensional." },
+                { id: 152, category: "Lembaga Jasa Keuangan", question: "Yang merupakan salah satu komponen manajemen risiko pada Penyelenggara LPBBTI adalah", options: ["Kecukupan proses identifikasi, pengukuran, pengendalian, dan pemantauan risiko, serta sistem informasi manajemen risiko", "Strategi pemasaran dan promosi", "Program kesejahteraan karyawan", "Rencana ekspansi kantor cabang"], answer: "Kecukupan proses identifikasi, pengukuran, pengendalian, dan pemantauan risiko, serta sistem informasi manajemen risiko", explanation: "Komponen ini merupakan inti dari kerangka kerja manajemen risiko yang mencakup seluruh siklus pengelolaan risiko secara sistematis." },
+                { id: 153, category: "Pengawasan & Kepatutan", question: "Apa yang menjadi fokus utama pengawasan terhadap perusahaan pergadaian", options: ["Jumlah nasabah baru", "Kepatuhan terhadap peraturan perundang-undangan", "Tingkat kepuasan karyawan", "Desain interior kantor"], answer: "Kepatuhan terhadap peraturan perundang-undangan", explanation: "Fokus utama pengawasan OJK adalah memastikan LJK, termasuk pergadaian, beroperasi sesuai dengan koridor hukum dan peraturan yang berlaku untuk melindungi konsumen dan menjaga stabilitas." },
+                { id: 154, category: "Lembaga Jasa Keuangan", question: "Jabatan berikut adalah jabatan yang wajib memiliki sertifikasi teknologi finansial, kecuali", options: ["Direktur yang membawahi Manajemen Risiko", "Kepala Fungsi TI", "Pemegang Saham Pengendali", "Anggota Tim IT"], answer: "Pemegang Saham Pengendali", explanation: "Sertifikasi kompetensi di bidang teknologi finansial diwajibkan bagi fungsi eksekutif dan operasional yang terkait langsung dengan manajemen risiko dan teknologi, bukan bagi pemegang saham." },
+                { id: 155, category: "Lembaga Jasa Keuangan", question: "Jumlah maksimum pendanaan yang boleh difasilitasi oleh penyelenggara LPBBTI sebesar", options: ["Rp 500 juta", "Rp 1 milyar", "Rp 5 milyar", "Rp 2 milyar"], answer: "Rp 2 milyar", explanation: "OJK menetapkan batas atas (plafon) pendanaan untuk setiap penerima dana (borrower) melalui platform LPBBTI adalah sebesar Rp 2 Miliar." },
+                { id: 156, category: "Peraturan & Hukum", question: "Apa yang menjadi tujuan utama dari POJK Nomor 10 Tahun 2021 tentang LKM", options: ["Mengatur perizinan usaha dan kelembagaan LKM", "Menetapkan suku bunga pinjaman LKM", "Membatasi jumlah LKM", "Mewajibkan LKM menjadi bank"], answer: "Mengatur perizinan usaha dan kelembagaan LKM", explanation: "POJK tentang LKM bertujuan untuk memberikan kepastian hukum dan kerangka kerja yang jelas terkait perizinan usaha, kelembagaan, dan kegiatan operasional LKM." },
+                { id: 157, category: "Roadmap & Tata Kelola", question: "Berikut adalah merupakan rencana kerja Strategi Pengembangan Elemen Ekosistem Konsumen Dalam Road Map LPBBTI, kecuali", options: ["Pengembangan pusat data fintech lending", "Penguatan asosiasi", "Penertiban Iklan Menyesatkan", "Peningkatan kerja sama dengan LJK lain"], answer: "Penertiban Iklan Menyesatkan", explanation: "Penertiban iklan menyesatkan lebih termasuk dalam pilar Perlindungan Konsumen, sementara pengembangan ekosistem fokus pada penguatan infrastruktur, asosiasi, dan kolaborasi." },
+                { id: 158, category: "Lembaga Jasa Keuangan", question: "LJK yang termasuk dalam LJK lainnya, kecuali", options: ["Pergadaian", "PT PNM", "BP Tapera", "PT SMF"], answer: "Pergadaian", explanation: "Dalam struktur pengawasan OJK, Pergadaian memiliki pengaturan dan pengawasan tersendiri yang cukup mapan, berbeda dengan LJK 'Lainnya' yang bersifat lebih spesifik atau sui generis." },
+                { id: 159, category: "Roadmap & Tata Kelola", question: "Berikut adalah merupakan rencana kerja Strategi Penguatan Edukasi dan Literasi Konsumen dalam Road Map Perusahaan Modal Ventura, kecuali", options: ["Kampanye publik mengenai PMV", "Penguatan Keamanan Siber", "Penyusunan materi edukasi", "Kolaborasi dengan perguruan tinggi"], answer: "Penguatan Keamanan Siber", explanation: "Penguatan keamanan siber lebih merupakan bagian dari pilar Tata Kelola dan Manajemen Risiko, bukan strategi edukasi dan literasi untuk konsumen/investee." },
+                { id: 160, category: "Peraturan & Hukum", question: "Peraturan OJK yang tidak memerlukan persetujuan dalam Rapat Dewan Komisioner adalah", options: ["POJK bersifat strategis", "SEDK bersifat tidak strategis", "Perubahan Anggaran Dasar OJK", "PDK tentang kode etik"], answer: "SEDK bersifat tidak strategis", explanation: "Surat Edaran Dewan Komisioner (SEDK) yang sifatnya teknis dan tidak strategis dapat diterbitkan tanpa melalui persetujuan RDK formal untuk efisiensi." },
+                { id: 161, category: "Roadmap & Tata Kelola", question: "Yang Merupakan Pilar ke 2 dalam Road Map Perusahaan Pembiayaan", options: ["Perlindungan Konsumen", "Pengembangan Elemen Ekosistem", "Tata Kelola Dan Kelembagaan", "Pengaturan dan Pengawasan"], answer: "Tata Kelola Dan Kelembagaan", explanation: "Pilar kedua dalam Roadmap Perusahaan Pembiayaan adalah penguatan Tata Kelola dan Kelembagaan sebagai fondasi untuk pertumbuhan yang berkelanjutan." },
+                { id: 162, category: "Pengawasan & Kepatutan", question: "Fungsi Pengembangan PVML", options: ["Melakukan pemeriksaan langsung", "Koordinasi pelaksanaan dan evaluasi atas penelitian dan pengembangan di sektor PVML, baik konvensional maupun syariah", "Menerbitkan izin usaha LJK", "Menangani pengaduan konsumen"], answer: "Koordinasi pelaksanaan dan evaluasi atas penelitian dan pengembangan di sektor PVML, baik konvensional maupun syariah", explanation: "Fungsi Pengembangan fokus pada riset, analisis, dan perumusan kebijakan untuk pengembangan sektor PVML ke depan, berbeda dengan fungsi pengawasan operasional." },
+                { id: 163, category: "Lembaga Jasa Keuangan", question: "Lembaga Pembiayaan Ekspor Indonesia (LPEI) diperkenankan untuk membentuk unit syariah...prinsip berikut harus dipenuhi...kecuali", options: ["Menunjuk Tenaga Ahli Syariah", "Memiliki Dewan Pengawas Syariah", "Pemisahan dana unit syariah", "Laporan keuangan digabung sepenuhnya"], answer: "Menunjuk Tenaga Ahli Syariah", explanation: "Unit Syariah wajib memiliki Dewan Pengawas Syariah (DPS) yang diangkat melalui RUPS atas rekomendasi MUI, bukan sekadar menunjuk tenaga ahli." },
+                { id: 164, category: "Pengawasan & Kepatutan", question: "Pada saat Perusahaan Pembiayaan tidak dapat disehatkan, maka selanjutnya terhadap Perusahaan akan dilakukan", options: ["Merger paksa", "Bail-out oleh pemerintah", "Diberi pinjaman subordinasi", "Cabut Izin Usaha"], answer: "Cabut Izin Usaha", explanation: "Jika upaya penyehatan melalui status pengawasan khusus gagal, langkah terakhir yang diambil OJK sesuai exit policy adalah pencabutan izin usaha (CIU)." },
+                { id: 165, category: "Modal Ventura", question: "Sumber pendanaan Perusahaan Modal Ventura Syariah (PMVS) dapat diperoleh dari, kecuali", options: ["Penerbitan Sukuk", "Pinjaman dari bank syariah", "Penyertaan modal dari investor", "Dana Ventura Syariah"], answer: "Dana Ventura Syariah", explanation: "Dana Ventura Syariah adalah produk yang dikelola oleh PMVS, bukan sumber pendanaan bagi PMVS itu sendiri. PMVS mendapatkan dana dari modal sendiri, pinjaman, atau penerbitan sukuk." },
+                { id: 166, category: "Lembaga Jasa Keuangan", question: "Dibawah ini yang tidak termasuk jenis penyelenggaraan usaha Perusahaan Pembiayaan Syariah", options: ["Pembiayaan Multiguna", "Sewa Guna Usaha (Ijarah)", "Anjak Piutang (Wakalah bil Ujrah)", "Pembiayaan Jual Beli (Murabahah)"], answer: "Pembiayaan Multiguna", explanation: "'Pembiayaan Multiguna' adalah terminologi pada pembiayaan konvensional. Di syariah, skema yang serupa menggunakan akad-akad spesifik seperti Murabahah atau Ijarah Muntahiyah Bittamlik." },
+                { id: 167, category: "Lembaga Jasa Keuangan", question: "Pendanaan Perusahaan Pembiayaan didapatkan dari, kecuali", options: ["Pinjaman Bank", "Crowd Funding", "Penerbitan Obligasi", "Modal Sendiri"], answer: "Crowd Funding", explanation: "Perusahaan Pembiayaan tidak diizinkan menghimpun dana langsung dari masyarakat dalam bentuk simpanan atau melalui skema crowd funding." },
+                { id: 168, category: "Prinsip & Operasional", question: "Perusahaan Pembiayaan Syariah memberikan pembiayaan kepada konsumen...Akad yang tepat untuk skema pembiayaan tersebut adalah", options: ["Murabahah", "Ijarah", "Musyarakah", "Wakalah"], answer: "Murabahah", explanation: "Skema di mana perusahaan membelikan barang untuk nasabah kemudian nasabah membayar secara angsuran dengan tambahan margin adalah ciri khas dari akad Murabahah." },
+                { id: 169, category: "Peraturan & Hukum", question: "Peraturan OJK yang mengatur mengenai penyelenggaraan usaha perusahaan pembiayaan syariah", options: ["POJK 35/POJK.05/2018", "POJK 16/POJK.05/2019", "UU No. 4 Tahun 2023", "POJK 10/POJK.05/2019"], answer: "POJK 10/POJK.05/2019", explanation: "POJK 10/2019 adalah peraturan yang secara khusus dan komprehensif mengatur tentang Penyelenggaraan Usaha Perusahaan Pembiayaan Syariah dan Unit Usaha Syariah Perusahaan Pembiayaan." },
+                { id: 170, category: "Pengawasan & Kepatutan", question: "Dalam hal Perusahaan Pembiayaan ditetapkan status pengawasan khusus...Perusahaan wajib menyampaikan", options: ["Laporan keuangan 5 tahun terakhir", "Daftar nasabah", "Rencana merger", "Rencana perbaikan permodalan/pendanaan"], answer: "Rencana perbaikan permodalan/pendanaan", explanation: "Kewajiban utama perusahaan saat masuk status pengawasan khusus adalah menyusun dan menyampaikan Rencana Tindak yang fokus pada perbaikan masalah utama, yaitu permodalan dan/atau pendanaan." },
+                { id: 171, category: "Pengawasan & Kepatutan", question: "Perusahaan Pembiayaan dikategorikan dalam status pengawasan khusus apabila memenuhi parameter kualitatif sebagai berikut", options: ["Penurunan laba bersih", "Ekspansi kantor cabang yang agresif", "Tingkat kesehatan PK-5 dan Peringkat Tata Kelola 5", "Pergantian direksi"], answer: "Tingkat kesehatan PK-5 dan Peringkat Tata Kelola 5", explanation: "Parameter kualitatif yang menjadi pemicu status pengawasan khusus adalah hasil penilaian Tingkat Kesehatan (TKS) dan Peringkat Tata Kelola (GCG) yang berada pada kategori terendah (misalnya peringkat 5)." },
+                { id: 172, category: "Lembaga Jasa Keuangan", question: "Kegiatan usaha yang dilakukan Perusahaan Pembiayaan adalah sebagai berikut, kecuali", options: ["Sewa Guna Usaha", "Anjak Piutang", "Pembiayaan Konsumen", "Pembiayaan Kredit"], answer: "Pembiayaan Kredit", explanation: "'Kredit' adalah terminologi yang umum digunakan dalam perbankan. Perusahaan Pembiayaan melakukan 'Pembiayaan' yang memiliki skema dan dasar hukum berbeda." },
+                { id: 173, category: "Pengawasan & Kepatutan", question: "Dasar hukum penyampaian laporan rencana bisnis tahunan adalah", options: ["POJK 35/2018", "POJK 24/2019", "POJK 10/2019", "UU No. 40 Tahun 2007"], answer: "POJK 24/2019", explanation: "POJK 24/2019 secara spesifik mengatur tentang Rencana Bisnis Lembaga Jasa Keuangan Non-Bank, termasuk tata cara dan substansi laporannya." },
+                { id: 174, category: "Pengawasan & Kepatutan", question: "Dasar hukum Laporan Keuangan Tahunan yang telah Diaudit oleh akuntan publik Perusahaan Pembiayaan Infrastruktur, yaitu", options: ["POJK 35/2018", "POJK 3/POJK.05/2013", "POJK 8/2022", "SEOJK 19/2023"], answer: "POJK 3/POJK.05/2013", explanation: "POJK 3/2013 mengatur tentang Laporan Keuangan Perusahaan Pembiayaan yang Wajib Disusun dan Disajikan Berdasarkan Standar Akuntansi Keuangan." },
+                { id: 175, category: "Pengawasan & Kepatutan", question: "Dalam rangka pengawasan berbasis risiko, OJK menetapkan status pengawasan LJKNB dalam 3 (tiga) kategori, yaitu sebagai berikut", options: ["Baik, Cukup, Kurang", "Sehat, Cukup Sehat, Tidak Sehat", "Normal, intensif, khusus", "Aman, Waspada, Bahaya"], answer: "Normal, intensif, khusus", explanation: "OJK mengklasifikasikan LJKNB ke dalam tiga status pengawasan: Normal (untuk LJK sehat), Intensif (untuk LJK dengan potensi masalah), dan Khusus (untuk LJK bermasalah yang memerlukan penanganan intens)." },
+                { id: 176, category: "Prinsip & Operasional", question: "Apa yang dimaksud dengan pinjaman fiktif dalam konteks fraud LKM", options: ["Pinjaman yang diberikan kepada nasabah palsu", "Pinjaman dengan bunga sangat tinggi", "Pinjaman yang tidak dicatat", "Pinjaman tanpa jaminan"], answer: "Pinjaman yang diberikan kepada nasabah palsu", explanation: "Pinjaman fiktif adalah salah satu modus fraud di mana pengurus atau oknum membuat data nasabah palsu untuk mencairkan dana LKM untuk kepentingan pribadi." },
+                { id: 177, category: "Lembaga Jasa Keuangan", question: "Bentuk badan hukum berdasarkan POJK LPBBTI adalah", options: ["PT", "Koperasi", "Yayasan", "CV"], answer: "PT", explanation: "POJK 10/2022 secara tegas mewajibkan badan hukum Penyelenggara LPBBTI adalah Perseroan Terbatas (PT)." },
+                { id: 178, category: "Pengawasan & Kepatutan", question: "Pengawasan terhadap Perusahaan Pembiayaan yang bermasalah dilakukan dengan", options: ["Pemeriksaan langsung (on-site)", "Pemantauan laporan (off-site)", "Benar semua", "Mewajibkan penyampaian rencana tindak"], answer: "Benar semua", explanation: "Penanganan perusahaan bermasalah melibatkan kombinasi berbagai alat pengawasan, termasuk pemeriksaan mendalam, pemantauan intensif, dan mewajibkan manajemen untuk menyusun rencana perbaikan." },
+                { id: 179, category: "Lembaga Jasa Keuangan", question: "Berikut ini adalah sumber pendanaan dari Perusahaan Pembiayaan Infrastruktur, kecuali", options: ["Penerbitan Efek Syariah/sukuk", "Pinjaman dari lembaga multilateral", "Penerbitan Obligasi", "Pinjaman jangka pendek dari LKM"], answer: "Penerbitan Efek Syariah/sukuk", explanation: "Meskipun dimungkinkan, penerbitan efek syariah/sukuk bukan sumber pendanaan yang umum bagi PPI konvensional dibandingkan dengan obligasi atau pinjaman dari lembaga multilateral." },
+                { id: 180, category: "Modal Ventura", question: "Manakah yang merupakan kegiatan utama dari Venture Capital Corporation (VCC)?", options: ["Pemberian pinjaman dengan agunan", "Penyertaan saham pada perusahaan rintisan", "Anjak piutang", "Sewa guna usaha"], answer: "Penyertaan saham pada perusahaan rintisan", explanation: "VCC fokus pada pembiayaan ekuitas, yaitu dengan membeli sebagian saham (penyertaan modal) pada perusahaan pasangan usaha (investee), khususnya perusahaan rintisan (startup)." },
+                { id: 181, category: "Peraturan & Hukum", question: "Sanksi pidana terhadap direksi yang dengan sengaja tidak melaksanakan langkah perbaikan saat status pengawasan khusus diatur dalam...", options: ["KUHP", "UU PT", "UU P2SK", "UU Perbankan"], answer: "UU P2SK", explanation: "UU P2SK (UU No. 4/2023) memperkuat penegakan hukum di sektor keuangan dengan menambahkan sanksi pidana bagi pihak utama yang tidak patuh terhadap perintah OJK." },
+                { id: 182, category: "Roadmap & Tata Kelola", question: "Salah satu tujuan dari Roadmap Pengembangan Sektor Jasa Keuangan adalah...", options: ["Meningkatkan persaingan antar LJK", "Menciptakan sektor jasa keuangan yang dalam, stabil, dan inklusif", "Mengurangi jumlah LJK yang beroperasi", "Menaikkan pajak untuk LJK"], answer: "Menciptakan sektor jasa keuangan yang dalam, stabil, dan inklusif", explanation: "Tujuan utama roadmap adalah untuk mengembangkan sektor jasa keuangan yang tidak hanya tumbuh (dalam), tetapi juga kuat (stabil) dan dapat diakses oleh seluruh lapisan masyarakat (inklusif)." },
+                { id: 183, category: "Lembaga Jasa Keuangan", question: "Apa yang dimaksud 'prinsip mengenal nasabah' (Know Your Customer) bagi LKM?", options: ["Hanya mengetahui nama dan alamat nasabah", "Memastikan nasabah adalah kerabat pengurus", "Memverifikasi identitas, latar belakang, dan tujuan transaksi nasabah", "Memberikan pinjaman kepada siapa saja yang mengajukan"], answer: "Memverifikasi identitas, latar belakang, dan tujuan transaksi nasabah", explanation: "Prinsip Mengenal Nasabah (PMN) atau KYC adalah proses wajib untuk memitigasi risiko pencucian uang dan pendanaan terorisme dengan memahami profil nasabah secara mendalam." },
+                { id: 184, category: "Pengawasan & Kepatutan", question: "Siapakah yang bertanggung jawab menetapkan status 'Normal', 'Intensif', atau 'Khusus' pada sebuah LJKNB?", options: ["Direksi LJKNB itu sendiri", "Asosiasi industri", "Otoritas Jasa Keuangan (OJK)", "Kementerian Keuangan"], answer: "Otoritas Jasa Keuangan (OJK)", explanation: "Sebagai lembaga pengawas, OJK memiliki kewenangan penuh untuk menetapkan status pengawasan suatu LJK berdasarkan hasil analisis dan pemeriksaan berbasis risiko." },
+                { id: 185, category: "Prinsip & Operasional", question: "Dalam akad Murabahah, margin keuntungan (ribh) harus...", options: ["Ditentukan secara sepihak oleh penjual saat pelunasan", "Disepakati oleh penjual dan pembeli di awal akad", "Sesuai dengan suku bunga pasar", "Bersifat variabel dan dapat berubah"], answer: "Disepakati oleh penjual dan pembeli di awal akad", explanation: "Salah satu syarat sahnya akad Murabahah adalah harga perolehan dan margin keuntungan harus transparan dan disepakati oleh kedua belah pihak di awal transaksi." },
+                { id: 186, category: "Lembaga Jasa Keuangan", question: "Perusahaan yang menyediakan pembiayaan untuk pengadaan barang modal dengan cara sewa guna usaha (leasing) dengan hak opsi bagi penyewa disebut...", options: ["Perusahaan Modal Ventura", "Perusahaan Anjak Piutang", "Perusahaan Pembiayaan", "Lembaga Keuangan Mikro"], answer: "Perusahaan Pembiayaan", explanation: "Kegiatan sewa guna usaha (leasing) dengan hak opsi (capital lease) adalah salah satu kegiatan usaha utama dari Perusahaan Pembiayaan." },
+                { id: 187, category: "Peraturan & Hukum", question: "Apa kepanjangan dari PDK dalam konteks peraturan OJK?", options: ["Peraturan Departemen Keuangan", "Pedoman Dewan Komisioner", "Peraturan Dewan Komisioner", "Prosedur Dewan Keuangan"], answer: "Peraturan Dewan Komisioner", explanation: "PDK adalah Peraturan Dewan Komisioner, yaitu peraturan internal OJK yang mengatur tata kelola dan operasional internal lembaga OJK itu sendiri." },
+                { id: 188, category: "Pengawasan & Kepatutan", question: "Penilaian Tingkat Kesehatan (TKS) perusahaan pembiayaan menggunakan pendekatan...", options: ["RGEC (Risk Profile, GCG, Earning, Capital)", "CAMELS (Capital, Asset, Management, Earning, Liquidity, Sensitivity)", "PEARLS (Protection, Effective financial structure, Asset quality, Rates of return, Liquidity, Signs of growth)", "Pemeriksaan Kepatuhan Saja"], answer: "RGEC (Risk Profile, GCG, Earning, Capital)", explanation: "OJK menggunakan pendekatan RGEC untuk menilai tingkat kesehatan perusahaan pembiayaan, yang mencakup analisis komprehensif terhadap profil risiko, tata kelola, rentabilitas, dan permodalan." },
+                { id: 189, category: "Modal Ventura", "question": "Exit strategy yang paling umum bagi Perusahaan Modal Ventura dari investasinya adalah...", "options": ["Menghapusbukukan investasi", "Menjual saham melalui IPO atau akuisisi", "Mengambil alih manajemen perusahaan", "Mengkonversi saham menjadi utang"], "answer": "Menjual saham melalui IPO atau akuisisi", "explanation": "Tujuan akhir dari investasi modal ventura adalah merealisasikan keuntungan dengan cara menjual kepemilikan sahamnya, baik melalui penawaran umum perdana (IPO) maupun diakuisisi oleh perusahaan lain." },
+                { id: 190, category: "Lembaga Jasa Keuangan", "question": "Manakah yang bukan merupakan kegiatan usaha yang diizinkan untuk LKM?", "options": ["Penghimpunan dana dalam bentuk Simpanan dan Deposito", "Penyaluran pembiayaan kepada anggota", "Kegiatan jual beli valuta asing", "Jasa konsultasi pengembangan usaha"], "answer": "Kegiatan jual beli valuta asing", "explanation": "LKM dilarang melakukan kegiatan usaha yang berisiko tinggi dan di luar fokus utamanya, seperti perdagangan valuta asing." },
+                { id: 191, category: "Peraturan & Hukum", "question": "Lembaga yang berwenang melakukan penyidikan tindak pidana di sektor jasa keuangan adalah...", "options": ["Hanya Kepolisian RI", "Hanya Kejaksaan Agung", "OJK dan Kepolisian RI", "KPK"], "answer": "OJK dan Kepolisian RI", "explanation": "UU OJK memberikan kewenangan khusus kepada OJK untuk melakukan penyidikan atas tindak pidana di sektor jasa keuangan, berkoordinasi dengan Kepolisian." },
+                { id: 192, category: "Pengawasan & Kepatutan", "question": "Apa tujuan utama dari penerapan GCG (Good Corporate Governance) pada LJK?", "options": ["Memaksimalkan gaji direksi", "Meningkatkan kepatuhan, transparansi, dan akuntabilitas perusahaan", "Menghindari pembayaran pajak", "Mempercepat proses perizinan"], "answer": "Meningkatkan kepatuhan, transparansi, dan akuntabilitas perusahaan", "explanation": "GCG bertujuan untuk menciptakan sistem pengelolaan perusahaan yang baik, melindungi kepentingan semua pemangku kepentingan (stakeholders), dan memastikan keberlanjutan usaha jangka panjang." },
+                { id: 193, category: "Prinsip & Operasional", "question": "Dalam skema anjak piutang syariah (factoring syariah), akad yang digunakan untuk pengalihan piutang adalah...", "options": ["Qardh", "Wakalah bil Ujrah", "Kafalah", "Hiwalah"], "answer": "Wakalah bil Ujrah", "explanation": "Akad Wakalah bil Ujrah (perwakilan dengan imbalan/fee) digunakan di mana perusahaan anjak piutang bertindak sebagai wakil dari nasabah untuk menagihkan piutang dengan mendapatkan ujrah (fee)." },
+                { id: 194, category: "Lembaga Jasa Keuangan", "question": "Batas maksimum pemberian pembiayaan (BMPP) pada perusahaan pembiayaan ditujukan untuk...", "options": ["Meningkatkan penyaluran pembiayaan", "Membatasi pembiayaan pada satu nasabah", "Mengendalikan risiko konsentrasi kredit", "Menurunkan suku bunga"], "answer": "Mengendalikan risiko konsentrasi kredit", "explanation": "BMPP atau Batas Maksimum Pemberian Pembiayaan adalah mekanisme manajemen risiko untuk mencegah perusahaan menempatkan terlalu banyak risiko pada satu debitur atau grup debitur." },
+                { id: 195, category: "Modal Ventura", "question": "Perusahaan rintisan (startup) yang menjadi target investasi Perusahaan Modal Ventura disebut...", "options": ["Investor Pasangan Usaha (IPU)", "Perusahaan Pasangan Usaha (PPU)", "Debitur Pasangan Usaha (DPU)", "Mitra Pasangan Usaha (MPU)"], "answer": "Perusahaan Pasangan Usaha (PPU)", "explanation": "Dalam terminologi modal ventura, perusahaan yang menerima investasi (investee company) disebut sebagai Perusahaan Pasangan Usaha (PPU)." },
+                { id: 196, category: "Peraturan & Hukum", "question": "Jika terdapat pertentangan antara Anggaran Dasar perusahaan dengan Peraturan OJK, maka yang berlaku adalah...", "options": ["Anggaran Dasar Perusahaan", "Keputusan RUPS", "Peraturan OJK", "Kebijakan Direksi"], "answer": "Peraturan OJK", "explanation": "Sebagai peraturan perundang-undangan, Peraturan OJK memiliki kedudukan hukum yang lebih tinggi (lex superior) daripada Anggaran Dasar yang merupakan perjanjian perdata." },
+                { id: 197, category: "Pengawasan & Kepatutan", "question": "Seorang direktur LJK yang terbukti melakukan fraud dapat dikenakan sanksi...", "options": ["Hanya sanksi administratif dari OJK", "Hanya sanksi perdata", "Sanksi administratif, perdata, dan pidana", "Hanya diberhentikan dari jabatannya"], "answer": "Sanksi administratif, perdata, dan pidana", "explanation": "Fraud di sektor keuangan dapat berakibat pada berbagai sanksi: administratif dari OJK (misal, pencabutan izin), perdata (ganti rugi), dan pidana (penjara/denda)." },
+                { id: 198, category: "Lembaga Jasa Keuangan", "question": "Apa perbedaan utama antara Perusahaan Pembiayaan dengan Perbankan?", "options": ["Bank boleh menghimpun dana dari masyarakat, perusahaan pembiayaan tidak", "Bank hanya menyalurkan kredit korporasi", "Perusahaan pembiayaan tidak diawasi OJK", "Tidak ada perbedaan"], "answer": "Bank boleh menghimpun dana dari masyarakat, perusahaan pembiayaan tidak", "explanation": "Perbedaan paling fundamental adalah fungsi intermediasi. Bank dapat menghimpun dana dari masyarakat (giro, tabungan, deposito), sedangkan perusahaan pembiayaan dilarang melakukannya." },
+                { id: 199, category: "Prinsip & Operasional", "question": "Risiko yang timbul akibat kegagalan sistem, kesalahan manusia, atau kejadian eksternal yang mempengaruhi operasional perusahaan disebut...", "options": ["Risiko Kredit", "Risiko Pasar", "Risiko Operasional", "Risiko Likuiditas"], "answer": "Risiko Operasional", "explanation": "Risiko operasional adalah risiko kerugian yang disebabkan oleh ketidakcukupan atau kegagalan proses internal, manusia, sistem teknologi, atau dari kejadian eksternal." },
+                { id: 200, category: "Roadmap & Tata Kelola", "question": "Pilar 'Pengembangan Elemen Ekosistem' dalam sebuah roadmap bertujuan untuk...", "options": ["Menghukum LJK yang melanggar", "Memperkuat infrastruktur pendukung, asosiasi, dan kolaborasi industri", "Memperketat peraturan yang ada", "Mengurangi jumlah pemain di industri"], "answer": "Memperkuat infrastruktur pendukung, asosiasi, dan kolaborasi industri", "explanation": "Pilar ini fokus pada pengembangan komponen-komponen di luar LJK itu sendiri yang dapat mendukung pertumbuhan industri secara keseluruhan, seperti pusat data, asosiasi yang kuat, dan sinergi antar lembaga." }
+            ];
+
+
+            // Variabel Global
+            let userAnswers = {};
+            let currentQuestionId = null;
+            const questionNavigation = document.getElementById('question-navigation');
+            const questionDisplay = document.getElementById('question-display');
+            const welcomeScreen = document.getElementById('welcome-screen');
+            const categoryFilter = document.getElementById('category-filter');
+            const resultsModal = document.getElementById('results-modal');
+            const showResultsBtn = document.getElementById('show-results-btn');
+            const closeModalBtn = document.getElementById('close-modal-btn');
+
+
+            // Fungsi untuk menginisialisasi Kuis
+            function initializeQuiz() {
+                const categories = [...new Set(questions.map(q => q.category))];
+                categories.sort().forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category;
+                    option.textContent = category;
+                    categoryFilter.appendChild(option);
+                });
+                
+                renderNavigation();
+                categoryFilter.addEventListener('change', renderNavigation);
+                showResultsBtn.addEventListener('click', showResults);
+                closeModalBtn.addEventListener('click', () => resultsModal.classList.add('hidden'));
+            }
+
+            // Fungsi untuk merender navigasi soal
+            function renderNavigation() {
+                questionNavigation.innerHTML = '';
+                const selectedCategory = categoryFilter.value;
+                const filteredQuestions = questions.filter(q => selectedCategory === 'all' || q.category === selectedCategory);
+
+                // Loop untuk membuat grup per 25 soal
+                for (let groupStart = 1; groupStart <= 200; groupStart += 25) {
+                    const groupEnd = groupStart + 24;
+                    const questionsInGroupForFilter = filteredQuestions.filter(q => q.id >= groupStart && q.id <= groupEnd);
+
+                    // Jika ada filter kategori, dan tidak ada soal di grup ini, jangan tampilkan grupnya.
+                    if (selectedCategory !== 'all' && questionsInGroupForFilter.length === 0) {
+                        continue;
+                    }
+
+                    const groupContainer = document.createElement('div');
+
+                    const header = document.createElement('h4');
+                    header.textContent = `Soal ${groupStart} - ${groupEnd}`;
+                    header.className = 'text-sm font-semibold text-gray-600 mt-4 pb-1 border-b';
+                    if (groupStart === 1) {
+                        header.classList.remove('mt-4');
+                    }
+                    groupContainer.appendChild(header);
+
+                    const gridContainer = document.createElement('div');
+                    gridContainer.className = 'grid grid-cols-5 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-5 gap-2 pt-2';
+
+                    for (let i = groupStart; i <= groupEnd; i++) {
+                        const questionData = questions.find(q => q.id === i);
+
+                        // Jika filter 'semua' aktif, tampilkan semua nomor (ada atau tidak)
+                        if (selectedCategory === 'all') {
+                            const navItem = document.createElement('div');
+                            navItem.textContent = i;
+                            navItem.className = 'w-10 h-10 flex items-center justify-center font-bold rounded-md shadow-sm';
+
+                            if (questionData) { // Soal tersedia
+                                navItem.classList.add('question-nav-item', 'cursor-pointer');
+                                if (userAnswers[i]) {
+                                    navItem.classList.add(userAnswers[i].isCorrect ? 'bg-green-500' : 'bg-red-500', 'text-white');
+                                } else {
+                                    navItem.classList.add('bg-gray-200', 'text-gray-700');
+                                }
+                                if (i === currentQuestionId) {
+                                    navItem.classList.add('ring-2', 'ring-blue-500', 'ring-offset-2');
+                                }
+                                navItem.addEventListener('click', () => displayQuestion(i));
+                            } else { // Soal tidak tersedia
+                                navItem.classList.add('bg-gray-50', 'text-gray-300', 'cursor-not-allowed');
+                            }
+                            gridContainer.appendChild(navItem);
+                        }
+                        // Jika ada filter kategori, hanya tampilkan soal yang ada dan cocok dengan filter
+                        else if (questionData && questionsInGroupForFilter.some(q => q.id === i)) {
+                            const navItem = document.createElement('div');
+                            navItem.textContent = i;
+                            navItem.className = 'w-10 h-10 flex items-center justify-center font-bold rounded-md shadow-sm question-nav-item cursor-pointer';
+
+                            if (userAnswers[i]) {
+                                navItem.classList.add(userAnswers[i].isCorrect ? 'bg-green-500' : 'bg-red-500', 'text-white');
+                            } else {
+                                navItem.classList.add('bg-gray-200', 'text-gray-700');
+                            }
+                            if (i === currentQuestionId) {
+                                navItem.classList.add('ring-2', 'ring-blue-500', 'ring-offset-2');
+                            }
+                            navItem.addEventListener('click', () => displayQuestion(i));
+                            gridContainer.appendChild(navItem);
+                        }
+                    }
+                    groupContainer.appendChild(gridContainer);
+                    questionNavigation.appendChild(groupContainer);
+                }
+            }
+
+
+            // Fungsi untuk menampilkan soal
+            function displayQuestion(id) {
+                currentQuestionId = id;
+                const question = questions.find(q => q.id === id);
+
+                if (!question) return;
+
+                welcomeScreen.classList.add('hidden');
+                questionDisplay.classList.remove('hidden');
+
+                document.getElementById('question-number').textContent = question.id;
+                document.getElementById('question-category').textContent = question.category;
+                document.getElementById('question-text').textContent = question.question;
+
+                const optionsContainer = document.getElementById('options-container');
+                optionsContainer.innerHTML = '';
+
+                // Mengacak urutan opsi
+                const shuffledOptions = [...question.options].sort(() => Math.random() - 0.5);
+
+                shuffledOptions.forEach(option => {
+                    const optionWrapper = document.createElement('div');
+                    optionWrapper.classList.add('option-item', 'border', 'border-gray-300', 'p-4', 'rounded-lg', 'text-gray-700');
+                    optionWrapper.dataset.option = option;
+                    
+                    optionWrapper.innerHTML = `<span>${option}</span>`;
+
+                    if(userAnswers[id] && userAnswers[id].selected === option) {
+                         optionWrapper.classList.add('bg-yellow-100', 'border-yellow-400');
+                    }
+
+                    optionWrapper.addEventListener('click', () => handleOptionSelect(question, option));
+                    optionsContainer.appendChild(optionWrapper);
+                });
+                
+                document.getElementById('explanation-container').innerHTML = `
+                    <div id="explanation-card" class="explanation-card mt-6">
+                        <h4 class="font-bold">Pembahasan:</h4>
+                        <p id="explanation-text" class="mt-2"></p>
+                    </div>
+                `;
+                
+                const nextBtn = document.getElementById('next-question-btn');
+                nextBtn.classList.add('hidden');
+                nextBtn.onclick = () => {
+                    const nextQuestion = questions.find(q => q.id > currentQuestionId);
+                    if (nextQuestion) {
+                        displayQuestion(nextQuestion.id);
+                    }
+                };
+
+                if (userAnswers[id]) {
+                    showAnswer(question, userAnswers[id].selected);
+                }
+                
+                renderNavigation();
+            }
+
+            // Fungsi saat memilih jawaban
+            function handleOptionSelect(question, selectedOption) {
+                if (userAnswers[question.id]) return; // Sudah dijawab
+
+                const isCorrect = selectedOption === question.answer;
+                userAnswers[question.id] = { selected: selectedOption, isCorrect: isCorrect };
+
+                showAnswer(question, selectedOption);
+                renderNavigation();
+            }
+            
+            // Fungsi untuk menampilkan jawaban dan penjelasan
+            function showAnswer(question, selectedOption) {
+                 const options = document.querySelectorAll('.option-item');
+                 options.forEach(opt => {
+                     opt.style.pointerEvents = 'none'; // Disable further clicks
+                     const optionText = opt.dataset.option;
+                     
+                     if (optionText === question.answer) {
+                         opt.classList.remove('bg-yellow-100', 'border-yellow-400');
+                         opt.classList.add('bg-green-100', 'border-green-500', 'font-bold');
+                         opt.innerHTML += `<span class="ml-2 text-green-600">&#10003;</span>`;
+                     } else if (optionText === selectedOption) {
+                         opt.classList.remove('bg-yellow-100', 'border-yellow-400');
+                         opt.classList.add('bg-red-100', 'border-red-500');
+                         opt.innerHTML += `<span class="ml-2 text-red-600">&#10007;</span>`;
+                     }
+                 });
+
+                const explanationCard = document.getElementById('explanation-card');
+                const explanationText = document.getElementById('explanation-text');
+
+                explanationCard.className = 'explanation-card mt-6 bg-gray-50 border-l-4 p-4 rounded-r-lg';
+                if (userAnswers[question.id].isCorrect) {
+                     explanationCard.classList.add('border-green-500', 'bg-green-50');
+                     explanationText.textContent = question.explanation;
+                     explanationText.classList.add('text-green-700');
+                } else {
+                     explanationCard.classList.add('border-red-500', 'bg-red-50');
+                     explanationText.textContent = question.explanation;
+                     explanationText.classList.add('text-red-700');
+                }
+                setTimeout(() => explanationCard.classList.add('show'), 10);
+                
+                const nextBtn = document.getElementById('next-question-btn');
+                const nextQuestion = questions.find(q => q.id > currentQuestionId);
+                if (nextQuestion) {
+                     nextBtn.classList.remove('hidden');
+                }
+            }
+            
+            // Fungsi untuk menampilkan hasil
+            function showResults() {
+                const totalAnswered = Object.keys(userAnswers).length;
+                if (totalAnswered === 0) {
+                    alert("Anda belum menjawab satu soal pun.");
+                    return;
+                }
+
+                const correctCount = Object.values(userAnswers).filter(ans => ans.isCorrect).length;
+                const incorrectCount = totalAnswered - correctCount;
+                const score = (correctCount / questions.length) * 100;
+
+                document.getElementById('final-score').textContent = `${score.toFixed(0)}%`;
+                document.getElementById('correct-answers').textContent = correctCount;
+                document.getElementById('incorrect-answers').textContent = incorrectCount;
+                
+                // Analisis per kategori
+                const categoryResultsContainer = document.getElementById('category-results');
+                categoryResultsContainer.innerHTML = '';
+                const categories = [...new Set(questions.map(q => q.category))];
+                
+                categories.forEach(category => {
+                    const questionsInCategory = questions.filter(q => q.category === category);
+                    const answeredInCategory = Object.keys(userAnswers).filter(id => questions.find(q=>q.id==id).category === category);
+                    const correctInCategory = answeredInCategory.filter(id => userAnswers[id].isCorrect).length;
+                    
+                    if (answeredInCategory.length > 0) {
+                        const categoryScore = (correctInCategory / answeredInCategory.length) * 100;
+                        
+                        const resultEl = document.createElement('div');
+                        resultEl.innerHTML = `
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="font-semibold text-gray-700">${category}</span>
+                                <span class="text-sm text-gray-500">${correctInCategory}/${answeredInCategory.length} benar</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                <div class="h-2.5 rounded-full ${categoryScore > 60 ? 'bg-green-500' : 'bg-red-500'}" style="width: ${categoryScore}%"></div>
+                            </div>
+                        `;
+                        categoryResultsContainer.appendChild(resultEl);
+                    }
+                });
+
+                resultsModal.classList.remove('hidden');
+            }
+
+
+            // Mulai Kuis
+            initializeQuiz();
+        });
+    </script>
+
+</body>
+</html>
