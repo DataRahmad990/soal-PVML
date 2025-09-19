@@ -1,0 +1,28 @@
+<script src="database.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Database soal sudah dipindahkan ke database.js
+            // Jadi di sini sudah tidak ada lagi const questions = [...]
+
+            // Variabel Global
+            let userAnswers = {};
+            let currentQuestionId = null;
+            const questionNavigation = document.getElementById('question-navigation');
+            const questionDisplay = document.getElementById('question-display');
+            const welcomeScreen = document.getElementById('welcome-screen');
+            const categoryFilter = document.getElementById('category-filter');
+            const resultsModal = document.getElementById('results-modal');
+            const showResultsBtn = document.getElementById('show-results-btn');
+            const closeModalBtn = document.getElementById('close-modal-btn');
+
+            // ... dan semua sisa kode JavaScript kamu (fungsi-fungsi, dll)
+            // Lanjutkan sampai akhir...
+
+            // Mulai Kuis
+            initializeQuiz();
+        });
+    </script>
+
+</body>
+</html>
