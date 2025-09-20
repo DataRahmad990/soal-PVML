@@ -169,7 +169,7 @@ const questions = [
     "Proyeksi laporan keuangan rasio keuangan"
   ],
   "answer": "Semua jawaban benar.",
-  "explanation": "Laporan Rencana Bisnis Tahunan untuk Perusahaan Modal Ventura (PMV) merupakan laporan yang komprehensif. Sesuai ketentuan, laporan ini harus memuat setidaknya Rencana Aksi Keuangan Berkelanjutan (RAKB), proyeksi laporan keuangan, serta rencana dan realisasi edukasi bagi pegawai. Karena semua opsi (a, b, dan d) adalah komponen yang wajib ada, maka jawaban yang tepat adalah 'Semua jawaban benar'."
+  "explanation": "Laporan Rencana Bisnis Tahunan untuk Perusahaan Modal Ventura (PMV) merupakan laporan komprehensif. Sesuai ketentuan, laporan ini harus memuat setidaknya Rencana Aksi Keuangan Berkelanjutan (RAKB), proyeksi laporan keuangan, serta rencana dan realisasi edukasi. Karena semua opsi tersebut adalah komponen yang wajib ada, maka jawaban yang tepat adalah 'Semua jawaban benar'."
 },
                 { id: 111, category: "Lembaga Jasa Keuangan", question: "Kegiatan usaha PT SMF (Persero) sebagai lembaga khusus (sui generis) yang dilarang untuk dilakukan adalah sebagai berikut, kecuali", options: ["Menyalurkan KPR langsung ke nasabah", "Sekuritisasi", "Menghimpun dana masyarakat", "Memberi pinjaman tanpa agunan"], answer: "Sekuritisasi", explanation: "Sekuritisasi aset KPR adalah kegiatan utama yang diizinkan untuk PT SMF. Sedangkan kegiatan lain seperti menyalurkan KPR langsung adalah tugas bank (pembiayaan primer)." },
                 { id: 112, category: "Peraturan & Hukum", question: "POJK yang mengatur mengenai kegiatan usaha PT SMF (Persero) adalah", options: ["POJK 16/2019", "POJK 35/2018", "POJK 8/POJK.05/2022", "POJK 25/2023"], answer: "POJK 8/POJK.05/2022", explanation: "POJK 8/2022 adalah peraturan terbaru yang mengatur tentang Perusahaan Pembiayaan Sekunder Perumahan, yang merupakan landasan operasional bagi PT SMF." },
@@ -263,6 +263,7 @@ const questions = [
                 { id: 200, category: "Roadmap & Tata Kelola", "question": "Pilar 'Pengembangan Elemen Ekosistem' dalam sebuah roadmap bertujuan untuk...", "options": ["Menghukum LJK yang melanggar", "Memperkuat infrastruktur pendukung, asosiasi, dan kolaborasi industri", "Memperketat peraturan yang ada", "Mengurangi jumlah pemain di industri"], "answer": "Memperkuat infrastruktur pendukung, asosiasi, dan kolaborasi industri", "explanation": "Pilar ini fokus pada pengembangan komponen-komponen di luar LJK itu sendiri yang dapat mendukung pertumbuhan industri secara keseluruhan, seperti pusat data, asosiasi yang kuat, dan sinergi antar lembaga." }
 
             ];
+
 
 
 
